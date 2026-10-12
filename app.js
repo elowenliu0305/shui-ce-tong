@@ -43,6 +43,7 @@
     zap: '<path d="M13 2 4 14h6l-1 8 9-12h-6z"/>',
     coins: '<ellipse cx="12" cy="5.5" rx="7" ry="3"/><path d="M5 5.5v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6M5 11.5v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/>',
     sort: '<path d="M7 4v16M4 7l3-3 3 3M17 20V4M14 17l3 3 3-3"/>',
+    compass: '<circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/>',
     layers: '<path d="m12 2 9 5-9 5-9-5zM3 12l9 5 9-5M3 17l9 5 9-5"/>',
     tax: '<path d="M6 2h12v20H6zM9 6h6M9 10h6M9 14h2M14 14h1M9 18h2M14 18h1"/>',
     close: '<path d="M18 6 6 18M6 6l12 12"/>',
@@ -60,6 +61,20 @@
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
+  }
+
+  function taxDocSvg(prefix) {
+    return `<svg viewBox="0 0 110 100" fill="none" aria-hidden="true">
+      <defs><linearGradient id="${prefix}DocG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4f9ff"/><stop offset="1" stop-color="#cfe2fc"/></linearGradient></defs>
+      <g transform="rotate(-8 55 45)">
+        <rect x="22" y="6" width="56" height="76" rx="9" fill="url(#${prefix}DocG)" stroke="#fff" stroke-opacity=".75"/>
+        <rect x="32" y="18" width="26" height="5" rx="2.5" fill="#9cc4f5"/>
+        <rect x="32" y="28" width="36" height="5" rx="2.5" fill="#b8d6f8"/>
+        <text x="30" y="64" font-size="22" font-weight="700" fill="#1266d8" font-family="-apple-system,'PingFang SC',sans-serif">税</text>
+      </g>
+      <circle cx="82" cy="72" r="17" fill="#2f86ff" stroke="rgba(255,255,255,.5)" stroke-width="2"/>
+      <path d="m75 72 5 5 9-10" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`;
   }
 
   function saveChartSvg(shadowId) {
@@ -116,7 +131,7 @@
       assessmentAnswers: {},
       questionIndex: 0,
       analysisStep: 0,
-      favorites: ["small-profit"],
+      favorites: ["software-list"],
       searchQuery: "研发费用",
       searchTab: "policy",
       resultFilter: "all",
@@ -216,47 +231,59 @@
   ];
 
   const policies = {
-    "rd-deduction": {
-      id: "rd-deduction",
-      title: "研发费用加计扣除政策",
+    "software-list": {
+      id: "software-list",
+      title: "享受税收优惠政策的软件企业清单（2026）",
       match: "高匹配",
       matchClass: "green",
-      source: "国家税务总局、财政部",
-      doc: "财政部 税务总局公告 2023 年第 7 号",
-      valid: "现行有效 · 更新于 2026.10.10",
-      saving: "6.2–9.8 万元/年",
-      summary: "企业开展符合条件的研发活动，实际发生的研发费用可按规定在税前加计扣除。",
-      satisfied: ["所属行业不在负面清单", "已开展研发活动", "企业所得税查账征收"],
-      pending: ["研发人员工时记录完整性", "材料与动力费用归集口径"],
-      tags: ["企业所得税", "研发创新", "全国适用"]
+      source: "国家发展改革委、工业和信息化部、财政部、海关总署、税务总局",
+      doc: "发改高技〔2026〕487 号《关于做好 2026 年享受税收优惠政策的集成电路企业或项目、软件企业清单制定工作的通知》",
+      docNo: "发改高技〔2026〕487 号",
+      docTitle: "关于做好 2026 年享受税收优惠政策的集成电路企业或项目、软件企业清单制定工作的通知",
+      pubDate: "2026-04-07",
+      savingShort: "2.8 – 4.6 万元/年",
+      valid: "现行有效 · 成文 2026.04.07",
+      saving: "入清单后享受企业所得税等优惠（估算 2.8–4.6 万元/年）",
+      summary: "列入国家鼓励的重点软件企业清单的，可享受企业所得税等优惠政策。2025 年已入清单的企业，2026 年需重新申报（申请窗口 4 月 7 日至 4 月 19 日）；符合条件可在所得税预缴时先行享受，年度汇算清缴时如未列入清单，按规定补缴税款、不加收滞纳金。",
+      satisfied: ["行业为软件和信息技术服务业", "有自行开发的软件产品并持续研发投入", "按规定建账并能提供经审计的会计报告"],
+      pending: ["是否达到重点鼓励类软件企业评价条件", "软件产品收入占比是否满足口径"],
+      tags: ["软件企业", "企业所得税", "清单管理"]
     },
-    "small-profit": {
-      id: "small-profit",
-      title: "小型微利企业所得税优惠",
+    "vat-newlaw": {
+      id: "vat-newlaw",
+      title: "增值税法施行后优惠政策衔接（2026 年第 10 号公告）",
       match: "高匹配",
       matchClass: "green",
       source: "财政部、国家税务总局",
-      doc: "财政部 税务总局公告 2023 年第 12 号及后续口径",
-      valid: "现行有效 · 更新于 2026.10.10",
-      saving: "2.4–4.4 万元/年",
-      summary: "符合条件的小型微利企业，可按现行政策对企业所得税进行优惠计算。",
-      satisfied: ["非限制和禁止行业", "从业人数不超过 300 人", "应纳税所得额在匹配区间"],
-      pending: ["资产总额期末平均值需复核"],
-      tags: ["小微企业", "企业所得税", "全国适用"]
+      doc: "财政部 税务总局公告 2026 年第 10 号《关于增值税法施行后增值税优惠政策衔接事项的公告》",
+      docNo: "财政部 税务总局公告 2026 年第 10 号",
+      docTitle: "关于增值税法施行后增值税优惠政策衔接事项的公告",
+      pubDate: "2026-10-08",
+      savingShort: "0.6 – 1.2 万元/年",
+      valid: "现行有效 · 2026.01.01 起施行",
+      saving: "0.6–1.2 万元/年（进项与优惠口径复核）",
+      summary: "《中华人民共和国增值税法》及实施条例于 2026 年 1 月 1 日正式施行，第 10 号公告明确起征点（月销售额 10 万元、季度 30 万元）和免征增值税项目等衔接安排。企业需按新法口径复核纳税人身份、适用税率与已享优惠是否延续。",
+      satisfied: ["增值税一般纳税人，按月正常申报", "经营范围不涉及新增免税项目"],
+      pending: ["2026 年度新增/调整优惠事项的衔接口径确认", "开票与台账在新口径下的一致性核对"],
+      tags: ["增值税", "新法施行", "政策衔接"]
     },
-    "software-vat": {
-      id: "software-vat",
-      title: "软件产品增值税即征即退",
+    "cross-region": {
+      id: "cross-region",
+      title: "跨区域涉税事项报验管理",
       match: "待补信息",
       matchClass: "orange",
-      source: "财政部、国家税务总局",
-      doc: "财税〔2011〕100 号及现行配套规定",
+      source: "国家税务总局",
+      doc: "《关于明确跨区域涉税事项报验管理相关问题的公告》及官方解读",
+      docNo: "国家税务总局公告",
+      docTitle: "关于明确跨区域涉税事项报验管理相关问题的公告",
+      pubDate: "2018-07-04",
+      savingShort: "待测算",
       valid: "现行有效 · 地方办理口径需确认",
-      saving: "待补充销售结构后测算",
-      summary: "一般纳税人销售自行开发的软件产品，符合条件的增值税实际税负超过部分可按规定退还。",
-      satisfied: ["一般纳税人", "软件和信息技术服务业"],
-      pending: ["软件产品检测/登记材料", "软件产品收入占比", "对应进项税额划分"],
-      tags: ["增值税", "软件企业", "资料待补"]
+      saving: "避免逾期申报与监管风险（不直接节税）",
+      summary: "企业在注册地以外开展生产经营（建筑作业、跨区域提供服务等）的，需按规定向经营地税务机关进行涉税事项报验，并在经营结束后办理税款申报与结清。公司若购销或服务集中在外地，建议先确认是否属于报验管理范围。",
+      satisfied: ["电子税务局账户可用，具备跨区域业务办理条件"],
+      pending: ["实际经营地与跨区业务持续时间", "是否存在需报验的具体项目"],
+      tags: ["跨区经营", "报验管理", "资料待补"]
     }
   };
 
@@ -287,25 +314,29 @@
 
   const cases = [
     {
-      id: "case-rd",
-      title: "一家软件企业如何补齐研发费用归集材料",
-      summary: "企业在准备加计扣除资料时发现工时和材料记录缺口，通过项目台账重构完成整改。",
-      tags: ["软件企业", "研发费用", "材料归集"],
-      result: "可归集研发费用口径更清晰，申报前补齐 6 类关键材料。"
+      id: "case-anchor",
+      title: "网络主播私户收款隐匿收入偷税案",
+      source: "国家税务总局杭州市税务局第三稽查局 · 2026.07.10 公布",
+      summary: "主播 2021–2023 年通过私人账户收款隐匿收入、转换收入性质等方式，少缴个人所得税、增值税等税费 313.45 万元，被追缴税费、加收滞纳金并处罚款共计 631.96 万元，款项已全部入库。",
+      tags: ["网络直播", "私户收款", "隐匿收入"],
+      result: "涉案税费款、滞纳金及罚款全部追缴入库；经营收入须通过对公账户结算，按期如实申报全部收入。",
+      background: "当事人在网络平台从事直播带货经营活动，注册为个体工商户（小规模纳税人），实际经营规模已接近甚至超过一般纳税人标准。",
+      problems: ["直播经营收入通过私人银行账户收取，长期不入账", "人为转换收入性质，少缴增值税与个人所得税", "疑似违规保留小规模纳税人身份适用低征收率"],
+      handling: ["税务机关依托税收大数据分析线索立案，逐笔核对私户流水", "2025 年 12 月作出处理决定：少缴税费 313.45 万元，追缴及罚款合计 631.96 万元", "全部款项追缴入库，并对当事人提示规范资金收款渠道"],
+      related: { policyId: "vat-newlaw", note: "增值税法 2026 年施行后，违规维持小规模身份的追溯补税成本显著提高" }
     },
     {
-      id: "case-small",
-      title: "小微企业因人数口径误判优惠的复核案例",
-      summary: "案例解析劳务派遣、季节性用工对从业人数计算的影响。",
-      tags: ["小型微利企业", "人数口径", "所得税"],
-      result: "重新按季度平均值计算，确认符合当期优惠条件。"
+      id: "case-dereg",
+      title: "涉税中介违规帮助企业注销被罚案",
+      source: "国家税务总局焦作市税务局稽查局 · 2026.06.18 公布",
+      summary: "代账公司在客户企业注销时违规确认资产损失、虚假填报清算报表（净资产单日由 666.63 万元变为 -2,675 元），造成投资人少缴个税 133.32 万元；中介被没收违法所得 2 万元并处罚款 66.66 万元，列为涉税服务失信主体。",
+      tags: ["注销清算", "代账风险", "个人所得税"],
+      result: "投资人少缴个税依法追征；中介及其实际控制人被列为涉税服务失信主体，全部款项追缴入库。",
+      background: "某贸易公司 2022–2024 年持续盈利，2024 年 10 月委托一家会计服务公司办理税务注销手续。",
+      problems: ["同一日提交的三、四季度报表，净资产由正转负、数据反差巨大", "中介违规确认货币资产损失，虚假填报清算附表与纳税申报", "清算环节未代扣代缴投资人分得剩余资产应缴的个人所得税"],
+      handling: ["税务机关通过大数据发现注销疑点，调取流水与申报资料核查", "向投资人追征少缴个人所得税 133.32 万元", "依据征管法实施细则第九十三条，对中介没收违法所得并处少缴税款 0.5 倍罚款"],
+      related: { doc: "《中华人民共和国税收征收管理法实施细则》第九十三条、财税〔2009〕60 号" }
     }
-  ];
-
-  const news = [
-    { title: "小微企业所得税优惠：年末复核要看这三项", summary: "从业人数、资产总额和应纳税所得额需要按政策口径复核。", tags: ["小微企业", "所得税"], tone: "", target: "small-profit" },
-    { title: "研发费用归集常见缺口与申报前准备", summary: "工时、材料、委外研发三类资料是实务核验重点。", tags: ["研发费用", "实务指南"], tone: "green", target: "rd-deduction" },
-    { title: "软件产品即征即退，哪些材料要先准备？", summary: "从产品登记到收入和进项划分，提前检查办理材料。", tags: ["软件企业", "增值税"], tone: "orange", target: "software-vat" }
   ];
 
   const answerLabels = {
@@ -367,7 +398,15 @@
     return `<div class="phone-frame"><div class="phone-screen"><div class="app-shell"><main class="page ${noNav ? "no-nav" : ""} ${options.className || ""}">${content}</main>${active ? bottomNav(active) : ""}${renderModal()}${renderToast()}</div></div></div>`;
   }
 
-  function go(route, params = {}) {
+  const ROOT_ROUTES = ["home", "checkup", "ai", "profile"];
+  const navStack = [];
+
+  // record=false 时不压栈（用于"返回"）；analyzing 为过渡页，不作为返回目标
+  function navigate(route, params = {}, record = true) {
+    if (record && currentRoute !== route && currentRoute !== "analyzing") {
+      if (ROOT_ROUTES.includes(route)) navStack.length = 0;
+      else navStack.push({ route: currentRoute, params: { ...routeParams } });
+    }
     currentRoute = route;
     routeParams = params;
     modal = null;
@@ -377,6 +416,8 @@
       if (page) page.scrollTop = 0;
     });
   }
+
+  function go(route, params) { navigate(route, params, true); }
 
   function showToast(message, kind = "") {
     state.toast = { message, kind };
@@ -405,10 +446,10 @@
       { title: "更多服务", sub: "企业全场景", icon: "more", tone: "silver", attrs: '' }
     ];
     const homeNews = [
-      { title: "2025年小微企业所得税优惠政策延续实施", summary: "财政部、税务总局发布公告，明确对小型微利企业年应纳税所得额不超过300万元的部分，继续按…", tags: ["小微企业", "所得税优惠", "政策解读"], date: "2025-10-08", tone: "coins", icon: "tax", route: "policy", id: "small-profit" },
-      { title: "研发费用加计扣除新政要点与申报实务", summary: "2025年研发费用加计扣除政策进一步优化，明确适用范围、归集口径及申报要求，企业应关注…", tags: ["研发加计扣除", "高新技术企业", "实务指南"], date: "2025-10-07", tone: "chart", icon: "report", route: "policy", id: "rd-deduction" },
-      { title: "税务稽查重点领域提示：这些风险需警惕", summary: "税务总局发布最新稽查重点领域提示，关注收入确认、成本费用列支、关联交易等关键风险点，建…", tags: ["税务稽查", "风险防控", "合规经营"], date: "2025-10-06", tone: "shield", icon: "shield", route: "risk", id: "invoice-gap" },
-      { title: "实务案例：一家科技企业的税收优惠申报要点", summary: "通过真实案例解析科技企业如何合规享受研发费用加计扣除，梳理关键步骤与注意事项，为同类…", tags: ["案例分析", "税收优惠", "申报实务"], date: "2025-10-05", tone: "desk", icon: "building", route: "case", id: "case-rd" }
+      { title: "增值税法 1 月 1 日起施行，10 号公告明确优惠衔接", summary: "财政部、税务总局明确起征点（月 10 万/季 30 万）与免征增值税项目衔接安排，企业应复核纳税人身份与已享优惠口径…", tags: ["增值税新法", "政策衔接", "快讯"], date: "2026-10-10", tone: "coins", icon: "tax", route: "policy", id: "vat-newlaw" },
+      { title: "7 起网红网店偷税案件集中曝光，平台经营者应诚信纳税", summary: "私户收款隐匿收入、转换收入性质，追缴税费、滞纳金并处罚款全部入库。网络并非法外之地，经营收入须对公结算…", tags: ["稽查曝光", "平台经济", "合规提醒"], date: "2026-07-10", tone: "shield", icon: "shield", route: "case", id: "case-anchor" },
+      { title: "专家解读：“逃逸式”注销不能逃避税收责任", summary: "注销不消除存续期间纳税义务，欺诈注销可被撤销登记并追征税款，偷税追征不受期限限制，个体户实控人承担连带责任…", tags: ["注销风险", "专家解读", "征管法"], date: "2026-07-10", tone: "desk", icon: "building", route: "case", id: "case-dereg" },
+      { title: "2026 年软件企业税收优惠清单申报启动，已入清单需重新申报", summary: "发改高技〔2026〕487 号明确 2025 年已列入清单的企业 2026 年需重新申报，申请窗口 4 月 7 日至 19 日，预缴可先行享受…", tags: ["软件企业", "清单管理", "所得税优惠"], date: "2026-04-07", tone: "chart", icon: "report", route: "policy", id: "software-list" }
     ];
     return layout(`
       <section class="ref-home-top">
@@ -696,19 +737,7 @@
         <div class="company-report">
           <span class="mini-icon">${icon("building", 22)}</span>
           <div style="min-width:0"><strong>${escapeHtml(company.name)}</strong><small>${escapeHtml(company.industry)} · ${escapeHtml(company.taxpayer)}</small></div>
-          <div class="report-3d" aria-hidden="true">
-            <svg viewBox="0 0 110 100" fill="none">
-              <defs><linearGradient id="rpDocG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4f9ff"/><stop offset="1" stop-color="#cfe2fc"/></linearGradient></defs>
-              <g transform="rotate(-8 55 45)">
-                <rect x="22" y="6" width="56" height="76" rx="9" fill="url(#rpDocG)" stroke="#fff" stroke-opacity=".75"/>
-                <rect x="32" y="18" width="26" height="5" rx="2.5" fill="#9cc4f5"/>
-                <rect x="32" y="28" width="36" height="5" rx="2.5" fill="#b8d6f8"/>
-                <text x="30" y="64" font-size="22" font-weight="700" fill="#1266d8" font-family="-apple-system,'PingFang SC',sans-serif">税</text>
-              </g>
-              <circle cx="82" cy="72" r="17" fill="#2f86ff" stroke="rgba(255,255,255,.5)" stroke-width="2"/>
-              <path d="m75 72 5 5 9-10" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
+          <div class="report-3d">${taxDocSvg("rp")}</div>
         </div>
       </section>
       <div class="report-sheet">
@@ -760,7 +789,7 @@
           <div class="prio-list">
             <div class="prio-item"><span class="p-no">1</span><div class="p-copy"><b>补齐研发项目材料归集</b><p>完善 3 笔研发费用归集资料，降低加计扣除风险</p></div>${icon("chevron", 18, 'class="p-chev"')}</div>
             <div class="prio-item"><span class="p-no">2</span><div class="p-copy"><b>检查进项发票合规性</b><p>存在 1 项进项发票需进一步核验</p></div>${icon("chevron", 18, 'class="p-chev"')}</div>
-            <div class="prio-item"><span class="p-no ghost">3</span><div class="p-copy"><b>评估软件产品即征即退资格</b><p>补充软件登记与销售结构后再测算可退税额</p></div>${icon("chevron", 18, 'class="p-chev"')}</div>
+            <div class="prio-item"><span class="p-no ghost">3</span><div class="p-copy"><b>准备软件企业清单重新申报</b><p>整理自研产品与收入占比材料，在申报窗口期内提交</p></div>${icon("chevron", 18, 'class="p-chev"')}</div>
           </div>
         </div>
       </div>
@@ -769,21 +798,56 @@
     `, null, { className: "report-page-bg report-scroll" });
   }
 
-  function opportunitiesPage() {
-    const list = Object.values(policies).filter((p) => state.resultFilter === "all" || (state.resultFilter === "high" ? p.match === "高匹配" : p.match === "待补信息"));
-    return layout(`
-      ${statusBar()}
-      ${pageHead("政策红利匹配", "为什么与你有关，一项项说清楚")}
-      <div class="filter-tabs">
-        <button class="filter-tab ${state.resultFilter === "all" ? "active" : ""}" data-action="result-filter" data-value="all">全部 3</button>
-        <button class="filter-tab ${state.resultFilter === "high" ? "active" : ""}" data-action="result-filter" data-value="high">高匹配 2</button>
-        <button class="filter-tab ${state.resultFilter === "pending" ? "active" : ""}" data-action="result-filter" data-value="pending">待补 1</button>
+  function oppCard(policy) {
+    const fav = state.favorites.includes(policy.id);
+    return `<article class="opp-card card">
+      <div class="opp-card-head">
+        <span class="opp-ico ${policy.matchClass}">${icon("gift", 22)}</span>
+        <div class="opp-title"><h3>${policy.title}</h3></div>
+        <span class="tag ${policy.matchClass}">${state.recalculated && policy.id === "software-list" ? "中匹配" : policy.match}</span>
       </div>
-      <section class="section" style="margin-top:14px"><div class="stack">
-        ${list.map((policy) => policyCard(policy)).join("")}
-      </div></section>
-      ${trustNote()}
-    `, null, { className: "page-bg-blue" });
+      <div class="opp-meta">${icon("report", 13)} ${policy.docNo} <span class="sep">|</span> 发布：${policy.pubDate}</div>
+      <p class="opp-doctitle">${policy.docTitle}。</p>
+      <div class="match-panel">
+        <div class="match-panel-label">${icon("compass", 16)} 匹配结果</div>
+        <div class="match-panel-rows">
+          <div class="mp-row green"><div class="mp-body"><div class="mp-head">${icon("check", 13)} 已满足主要条件</div><p>${policy.satisfied.join("，")}。</p></div>${icon("chevron", 15, 'class="mp-chev"')}</div>
+          ${policy.pending.length ? `<div class="mp-row orange"><div class="mp-body"><div class="mp-head">${icon("alert", 13)} 待确认条件</div><p>${state.recalculated && policy.id === "software-list" ? policy.pending.slice(1).join("，") + "。" : policy.pending.join("，") + "。"}</p></div>${icon("chevron", 15, 'class="mp-chev"')}</div>` : ""}
+        </div>
+      </div>
+      <div class="opp-foot">
+        <div class="opp-save ${policy.matchClass}"><small>预计可节税 ${icon("info", 12)}</small><strong>${policy.savingShort}</strong><span>基于历史数据估算，仅供参考</span></div>
+        <button class="opp-fav ${fav ? "active" : ""}" data-action="toggle-favorite" data-id="${policy.id}" aria-label="收藏">${icon(fav ? "heartFill" : "heart", 18)}</button>
+        <button class="btn primary opp-view" data-route="policy" data-id="${policy.id}">查看详情 ${icon("chevron", 15)}</button>
+      </div>
+    </article>`;
+  }
+
+  function opportunitiesPage() {
+    const all = Object.values(policies);
+    const list = all.filter((p) => state.resultFilter === "all" || (state.resultFilter === "high" ? p.match === "高匹配" : p.match === "待补信息"));
+    const counts = { all: all.length, high: all.filter((p) => p.match === "高匹配").length, pending: all.filter((p) => p.match === "待补信息").length };
+    return layout(`
+      <section class="opp-hero">
+        ${statusBar(true)}
+        <div class="opp-hero-top">
+          <button class="icon-btn light" data-action="back" aria-label="返回">${icon("back", 22)}</button>
+          <div class="opp-head-copy"><h1>政策红利匹配</h1><p>为企业智能匹配可享受的税收优惠政策</p></div>
+        </div>
+        <div class="opp-3d">${taxDocSvg("op")}</div>
+      </section>
+      <div class="opp-sheet">
+        <div class="filter-tabs">
+          <button class="filter-tab ${state.resultFilter === "all" ? "active" : ""}" data-action="result-filter" data-value="all">全部 ${counts.all}</button>
+          <button class="filter-tab ${state.resultFilter === "high" ? "active" : ""}" data-action="result-filter" data-value="high">高匹配 ${counts.high}</button>
+          <button class="filter-tab ${state.resultFilter === "pending" ? "active" : ""}" data-action="result-filter" data-value="pending">待补充 ${counts.pending}</button>
+        </div>
+        <div class="opp-list">
+          ${list.map((policy) => oppCard(policy)).join("")}
+        </div>
+        ${trustNote()}
+      </div>
+    `, null, { className: "opp-page-bg" });
   }
 
   function policyCard(policy, compact = false) {
@@ -791,9 +855,9 @@
     return `<article class="policy-card card tap-card">
       <div class="policy-head">
         <span class="mini-icon" style="color:${policy.matchClass === "green" ? "var(--green)" : "var(--orange)"};background:${policy.matchClass === "green" ? "var(--green-soft)" : "var(--orange-soft)"}">${icon(policy.matchClass === "green" ? "gift" : "info", 22)}</span>
-        <div class="copy"><h3>${policy.title}</h3><p>${policy.doc}</p></div><span class="tag ${policy.matchClass}">${state.recalculated && policy.id === "software-vat" ? "中匹配" : policy.match}</span>
+        <div class="copy"><h3>${policy.title}</h3><p>${policy.doc}</p></div><span class="tag ${policy.matchClass}">${state.recalculated && policy.id === "software-list" ? "中匹配" : policy.match}</span>
       </div>
-      ${compact ? "" : `<div class="match-row"><div class="match-box ok"><b>${icon("check", 14)} 已满足</b><p>${policy.satisfied.slice(0,2).join("、")}</p></div><div class="match-box wait"><b>${icon("alert", 14)} 待确认</b><p>${state.recalculated && policy.id === "software-vat" ? "已补 1 项，仍需销售结构" : policy.pending.slice(0,2).join("、")}</p></div></div>`}
+      ${compact ? "" : `<div class="match-row"><div class="match-box ok"><b>${icon("check", 14)} 已满足</b><p>${policy.satisfied.slice(0,2).join("、")}</p></div><div class="match-box wait"><b>${icon("alert", 14)} 待确认</b><p>${state.recalculated && policy.id === "software-list" ? "已补 1 项，仍需收入占比确认" : policy.pending.slice(0,2).join("、")}</p></div></div>`}
       <div class="policy-foot"><div><small style="color:var(--muted)">测算可节税</small><div class="saving">${policy.saving}</div></div><div style="display:flex;gap:5px"><button class="icon-btn soft" data-action="toggle-favorite" data-id="${policy.id}" aria-label="${favorite ? "取消收藏" : "收藏"}">${icon(favorite ? "heartFill" : "heart", 19)}</button><button class="btn primary" style="min-height:40px;padding:9px 13px;font-size:11px" data-route="policy" data-id="${policy.id}">查看详情</button></div></div>
     </article>`;
   }
@@ -819,10 +883,11 @@
   }
 
   function policyDetailPage() {
-    const policy = policies[routeParams.id] || policies["rd-deduction"];
+    const policy = policies[routeParams.id] || policies["software-list"];
     const favorite = state.favorites.includes(policy.id);
-    const recalced = state.recalculated && policy.id === "software-vat";
+    const recalced = state.recalculated && policy.id === "software-list";
     return layout(`
+      <div class="detail-scroll-area">
       ${statusBar()}
       ${pageHead("政策详情", policy.valid, `<button class="icon-btn soft" data-action="toggle-favorite" data-id="${policy.id}" aria-label="收藏">${icon(favorite ? "heartFill" : "heart", 20)}</button>`)}
       <section class="detail-hero">
@@ -849,8 +914,9 @@
       </section>
       <section class="detail-section card"><h2>${icon("layers", 19)} 建议准备材料</h2><ul><li>企业所得税申报表及相关明细</li><li>企业画像中待确认字段的证明资料</li><li>与政策条件相关的业务台账和凭证</li></ul></section>
       ${trustNote()}
-      <div class="sticky-cta"><button class="btn secondary" data-action="toggle-favorite" data-id="${policy.id}">${icon(favorite ? "heartFill" : "heart", 17)} ${favorite ? "已收藏" : "收藏"}</button><button class="btn primary" data-action="ask-ai" data-context="政策：${policy.title}">${icon("bot", 17)} 问 AI</button></div>
-    `, null, { className: "page-bg-blue" });
+      </div>
+      <div class="sticky-cta detail-cta"><button class="btn secondary" data-action="toggle-favorite" data-id="${policy.id}">${icon(favorite ? "heartFill" : "heart", 17)} ${favorite ? "已收藏" : "收藏"}</button><button class="btn primary" data-action="ask-ai" data-context="政策：${policy.title}">${icon("bot", 17)} 问 AI</button></div>
+    `, null, { className: "page-bg-blue detail-scroll" });
   }
 
   function riskDetailPage() {
@@ -888,14 +954,20 @@
 
   function casePage() {
     const item = cases.find((c) => c.id === routeParams.id) || cases[0];
+    const related = item.related || {};
+    const relatedPolicy = related.policyId ? policies[related.policyId] : null;
     return layout(`
       ${statusBar()}
-      ${pageHead("案例参考", "案例已脱敏，仅作方法参考")}
-      <section class="detail-hero"><div class="tags">${item.tags.map((tag) => `<span class="tag green">${tag}</span>`).join("")}</div><h1>${item.title}</h1><p>${item.summary}</p></section>
-      <section class="detail-section card"><h2>${icon("building", 19)} 企业背景</h2><p>一家杭州软件服务企业，员工 28 人，年度营收约 700 万元，持续开展产品研发但内部台账由业务部门分散维护。</p></section>
-      <section class="detail-section card"><h2>${icon("alert", 19)} 遇到的问题</h2><ul><li>研发工时只按部门统计，未关联具体项目</li><li>材料领用记录缺少研发项目编号</li><li>辅助账与财务总账存在小额差异</li></ul></section>
-      <section class="detail-section card"><h2>${icon("check", 19)} 处理方法</h2><ol><li>建立项目、人员、费用三张映射表</li><li>由项目负责人补充工时与领料依据</li><li>按月核对辅助账与总账并留存差异说明</li></ol><div class="source-box" style="margin-top:14px"><b>案例结果</b><br />${item.result}</div></section>
-      <section class="detail-section card"><h2>${icon("book", 19)} 关联政策</h2><button class="result-card tap-card" style="width:100%;background:var(--surface-2)" data-route="policy" data-id="rd-deduction"><span class="mini-icon">${icon("report", 21)}</span><span class="copy"><h3>研发费用加计扣除政策</h3><p>查看适用条件与政策依据</p></span>${icon("chevron", 18)}</button></section>
+      ${pageHead("案例参考", "公开案例摘编，仅作方法参考")}
+      <section class="detail-hero"><div class="tags">${item.tags.map((tag) => `<span class="tag green">${tag}</span>`).join("")}</div><h1>${item.title}</h1><p>${item.source}</p></section>
+      <section class="detail-section card"><h2>${icon("building", 19)} 主体背景</h2><p>${item.background}</p></section>
+      <section class="detail-section card"><h2>${icon("alert", 19)} 风险问题</h2><ul>${item.problems.map((p) => `<li>${p}</li>`).join("")}</ul></section>
+      <section class="detail-section card"><h2>${icon("check", 19)} 处理与结果</h2><ol>${item.handling.map((p) => `<li>${p}</li>`).join("")}</ol><div class="source-box" style="margin-top:14px"><b>案例结果</b><br />${item.result}</div></section>
+      <section class="detail-section card"><h2>${icon("book", 19)} 关联政策</h2>
+        ${relatedPolicy
+          ? `<button class="result-card tap-card" style="width:100%;background:var(--surface-2)" data-route="policy" data-id="${relatedPolicy.id}"><span class="mini-icon">${icon("report", 21)}</span><span class="copy"><h3>${relatedPolicy.title}</h3><p>${related.note || "查看适用条件与政策依据"}</p></span>${icon("chevron", 18)}</button>`
+          : `<div class="source-box"><b>${related.doc}</b></div>`}
+      </section>
       ${trustNote()}
       <div class="sticky-cta"><button class="btn secondary" data-action="save-case">${icon("heart", 17)} 收藏案例</button><button class="btn primary" data-action="ask-ai" data-context="案例：${item.title}">${icon("bot", 17)} 问 AI</button></div>
     `, null, { className: "page-bg-blue" });
@@ -1169,22 +1241,13 @@
 
   function handleAction(action, target) {
     switch (action) {
-      case "back":
-        if (["home", "checkup", "ai", "profile"].includes(currentRoute)) go("home");
-        else if (currentRoute === "questionnaire" && state.questionIndex > 0) { state.questionIndex -= 1; render(); }
-        else if (currentRoute === "policy") go(routeParams.returnTo === "home" ? "home" : routeParams.returnTo === "search" ? "search" : "opportunities");
-        else if (currentRoute === "risk") go(routeParams.returnTo === "home" ? "home" : "risks");
-        else if (currentRoute === "case") go(routeParams.returnTo === "home" ? "home" : "search");
-        else if (currentRoute === "assessment-intro") go("checkup");
-        else if (currentRoute === "assessment-method") go("assessment-intro");
-        else if (currentRoute === "profile-confirm") go(routeParams.returnTo === "report" ? "report" : "questionnaire");
-        else if (["opportunities", "risks"].includes(currentRoute)) go("report");
-        else if (currentRoute === "report") go(routeParams.returnTo === "histories" ? "histories" : "checkup");
-        else if (currentRoute === "search") go("home");
-        else if (["companies", "histories", "favorites", "files"].includes(currentRoute)) go("profile");
-        else if (currentRoute === "chats") go(routeParams.returnTo === "ai" ? "ai" : "profile");
-        else go("profile");
+      case "back": {
+        if (["home", "checkup", "ai", "profile"].includes(currentRoute)) { navStack.length = 0; go("home"); break; }
+        if (currentRoute === "questionnaire" && state.questionIndex > 0) { state.questionIndex -= 1; render(); break; }
+        const prev = navStack.pop();
+        navigate(prev ? prev.route : "home", prev ? prev.params : {}, false);
         break;
+      }
       case "company-switch":
         modal = { type: "company-switch" };
         render();
@@ -1263,7 +1326,7 @@
         state.searchQuery = target.dataset.value;
         state.searchTab = target.dataset.value.includes("风险") ? "case" : "policy";
         saveState();
-        go("search");
+        go("search", { returnTo: currentRoute });
         break;
       case "scan-search":
         modal = { type: "info", icon: "scan", title: "拍照识别（演示）", text: "正式版可拍摄政策文件、税务通知或二维码进行识别；当前 Demo 可从“文件解析”入口体验任务选择流程。" };
@@ -1282,7 +1345,7 @@
         state.recalculated = true;
         saveState();
         render();
-        showToast("已补充软件登记状态，匹配度更新为“中匹配”", "success");
+        showToast("已补充清单申报材料，匹配度更新为“中匹配”", "success");
         break;
       case "official-source":
         modal = { type: "info", icon: "book", title: "官方来源说明", text: "正式版将跳转财政部、国家税务总局或属地税务机关原文，并保留文号、发布日期、有效期与抓取时间。当前 Demo 不访问外部网站。" };
@@ -1358,6 +1421,7 @@
         state = freshState();
         modal = null;
         currentRoute = "home";
+        navStack.length = 0;
         render();
         showToast("Demo 数据已重置", "success");
         break;
@@ -1393,7 +1457,7 @@
       const input = form.querySelector("input");
       state.searchQuery = input.value.trim() || "研发费用";
       saveState();
-      go("search");
+      go("search", { returnTo: currentRoute });
     } else if (form.id === "chat-form") {
       const input = form.querySelector("#chat-input");
       const value = input.value;

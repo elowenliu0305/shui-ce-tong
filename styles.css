@@ -1900,6 +1900,125 @@ svg {
 
 .report-page-bg { background: #fff; }
 
+/* ── 政策红利匹配页 ── */
+.opp-page-bg { background: #fff; }
+
+.opp-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 14px 18px 52px;
+  color: #fff;
+  background:
+    radial-gradient(circle at 88% 12%, rgba(75, 216, 255, .44), transparent 30%),
+    linear-gradient(145deg, #07337b, #0765e6 65%, #0a8ff0);
+}
+
+.opp-hero .status-bar { position: relative; z-index: 5; }
+
+.opp-hero-top { position: relative; z-index: 5; display: flex; align-items: center; gap: 12px; }
+.opp-head-copy h1 { margin: 0; font-size: 22px; font-weight: 800; }
+.opp-head-copy p { margin: 5px 0 0; color: rgba(255,255,255,.72); font-size: 11px; }
+
+.opp-3d { position: absolute; right: -6px; top: 58px; z-index: 2; width: 118px; }
+.opp-3d svg { width: 100%; height: auto; display: block; }
+
+.opp-sheet {
+  position: relative;
+  z-index: 10;
+  margin-top: -28px;
+  padding: 18px 18px calc(14px + var(--safe-bottom));
+  border-radius: 24px 24px 0 0;
+  background: #fff;
+  box-shadow: 0 -8px 24px rgba(8, 40, 100, .12);
+}
+
+.opp-sheet .filter-tabs { margin: 0 0 16px; }
+
+.opp-list { display: grid; gap: 14px; }
+
+.opp-card {
+  display: block;
+  padding: 18px;
+  border: 1px solid #e4ecf7;
+  box-shadow: 0 6px 18px rgba(20, 60, 140, .05);
+}
+
+.opp-card-head { display: flex; align-items: flex-start; gap: 12px; }
+
+.opp-ico {
+  flex: none;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+}
+
+.opp-ico.green { color: #17a567; background: #e5f7ec; }
+.opp-ico.orange { color: #f08c1e; background: #fdf1df; }
+
+.opp-title { flex: 1; min-width: 0; }
+.opp-title h3 { margin: 0; font-size: 16.5px; line-height: 1.45; }
+.opp-card-head .tag { flex: none; margin-top: 3px; }
+
+.opp-meta { display: flex; align-items: center; gap: 5px; margin-top: 13px; color: var(--muted); font-size: 11px; }
+.opp-meta svg { flex: none; }
+.opp-meta .sep { margin: 0 3px; color: #c3cfe0; }
+
+.opp-doctitle { margin: 7px 0 0; color: #7d92ad; font-size: 12px; line-height: 1.6; }
+
+.match-panel { display: flex; gap: 12px; margin-top: 14px; padding: 12px; border-radius: 14px; background: #f2f6fc; }
+
+.match-panel-label {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding-top: 3px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.match-panel-label svg { color: var(--blue); }
+
+.match-panel-rows { flex: 1; min-width: 0; display: grid; gap: 8px; }
+
+.mp-row { display: flex; align-items: center; gap: 8px; padding: 11px 12px; border-radius: 12px; }
+.mp-row.green { background: #e9f8f0; }
+.mp-row.orange { background: #fdf3e4; }
+
+.mp-body { flex: 1; min-width: 0; }
+.mp-head { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 750; }
+.mp-row.green .mp-head { color: #17a567; }
+.mp-row.orange .mp-head { color: #f08c1e; }
+.mp-row p { margin: 4px 0 0; color: var(--ink-2); font-size: 11px; line-height: 1.55; }
+.mp-chev { flex: none; color: #a8b6cc; }
+
+.opp-foot { display: flex; align-items: center; gap: 10px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+
+.opp-save { flex: 1; min-width: 0; }
+.opp-save small { display: flex; align-items: center; gap: 4px; color: var(--muted); font-size: 10.5px; }
+.opp-save strong { display: block; margin-top: 3px; font-size: 19px; letter-spacing: -.01em; }
+.opp-save.green strong { color: var(--green); }
+.opp-save.orange strong { color: var(--orange); }
+.opp-save span { color: #9aa9bf; font-size: 9.5px; }
+
+.opp-fav {
+  flex: none;
+  width: 44px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: #5b6b82;
+  background: #eef2f9;
+}
+
+.opp-fav.active { color: #e5484d; background: #fdeaea; }
+
+.opp-view { flex: none; padding: 0 18px; font-size: 13px; }
+
 .page.report-scroll { display: flex; flex-direction: column; }
 .page.report-scroll.no-nav { padding-bottom: 0; }
 
@@ -1913,6 +2032,23 @@ svg {
 .report-scroll-area::-webkit-scrollbar { display: none; }
 
 .report-cta {
+  position: static;
+  flex: none;
+  border-top: 1px solid var(--line);
+  background: #fff;
+}
+
+/* 政策详情页同款固定底栏 */
+.page.detail-scroll { display: flex; flex-direction: column; }
+.page.detail-scroll.no-nav { padding-bottom: 0; }
+.detail-scroll-area {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.detail-scroll-area::-webkit-scrollbar { display: none; }
+.detail-cta {
   position: static;
   flex: none;
   border-top: 1px solid var(--line);

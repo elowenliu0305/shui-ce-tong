@@ -1,7 +1,7 @@
 # 税策通 Demo 优化进度
 
 > 项目路径：`/Users/jyokann/Documents/ChatGPT/新悦杯/dist/`（index.html / styles.css / app.js + PNG 素材）
-> 最后更新：2026-10-12（问卷 10 题、首次体检页 & AI 报告页 1:1 重做、节税区间图 SVG 化）
+> 最后更新：2026-10-13（政策红利匹配页 1:1、返回逻辑改导航历史栈、政策详情固定底栏、真实资料数据替换）
 
 ## 当前架构
 - 纯 vanilla JS SPA，IIFE + 事件委托，无框架
@@ -32,6 +32,12 @@
 15. 报告页底部 CTA 固定：`.page.report-scroll` flex column + `.report-scroll-area`（flex:1 唯一滚动区）包裹 hero+sheet；`.report-cta` 改 position:static 纯白底+顶部分隔线贴手机底（原 sticky 有缝隙；同时清掉该页 `.no-nav` 的 20px 底部 padding）
 16. 节税区间图改单张 SVG（`.save-chart`）：5 柱渐深 + 折线圆点 + 末位空心点 + 带尖尾白色气泡「最高可节税 14.2 万元」1:1 复刻示意图（旧 .s-chart/.s-bubble CSS 已删）；SVG 抽成 `saveChartSvg(shadowId)` 共享函数
 17. 问卷页进度条下方加紧凑版「预计可节税区间」白条（`.save-band.compact`：隐藏说明行、缩小 icon/字号；图表 104px——74px 时气泡文字太小被用户打回），与报告页同款
+18. 政策/快讯/案例数据替换为真实资料（资料(1).zip：政策 doc×82 + 案例 docx×20）：policies 改 software-list[发改高技〔2026〕487号]/vat-newlaw[2026年10号公告]/cross-region[跨区域报验]（旧 id rd-deduction/small-profit/software-vat 全部失效，引用已同步：favorites 默认、recalc 剧情、报告页行动项3、policyDetail fallback）；homeNews 4 条真实快讯（带日期）；cases 改真实案件（case-anchor 许静婉主播案 / case-dereg 焦作中介注销案）并新增 background/problems/handling/related 字段，casePage 改数据驱动；删除从未使用的 `news` 数组
+19. 返回逻辑：opportunities/risks 的 back 按 `routeParams.returnTo` 判断（首页"政策匹配"进入→回 home，报告页进入→回 report）
+20. 政策红利匹配页 1:1 复刻：蓝色 opp-hero（白状态栏+返回+标题副题+右上税单插画）+ opp-sheet 白色圆角上叠（分段 tab 全部/高匹配/待补充，计数数据驱动；opp-card：gift icon+标题+tag、docNo|发布日期、docTitle 灰字、match-panel「匹配结果」罗盘 icon+绿/橙两行[已满足主要条件/待确认条件]、footer 预计可节税 savingShort 大字+收藏 heart+查看详情按钮）；policies 新增 docNo/docTitle/pubDate/savingShort 字段；税单插画抽 `taxDocSvg(prefix)` 与报告页共用；新增 compass icon
+21. 返回交互改为**导航历史栈**（returnTo 传参方案已废弃——go() 会覆盖 routeParams，多级链路会丢来源）：`navigate(route, params, record)` 跳转前把当前页+参数压入 `navStack`；"back"= 弹栈返回；底部导航 ROOT_ROUTES（home/checkup/ai/profile）点击清空栈；analyzing 过渡页不入栈；问卷内返回上一题（第 1 题弹栈）；重置 Demo 清栈
+21a. ~~旧 returnTo 方案记录~~（已被 21 取代，勿参考）
+22. 政策详情页底栏固定：`.page.detail-scroll` flex column + `.detail-scroll-area`（唯一滚动区）+ `.detail-cta`（static 纯白底+顶部分隔线贴底），与报告页 `.report-scroll` 同模式
 
 ## 待办 / 未完成
 （暂无；报告页已完成，见第 13 条）
@@ -43,3 +49,4 @@
 - PNG icon 底色：注意 `.asset-icon` 的 nth-child 背景规则，需 `style="background:none"`
 - 「开始体检」按钮下白条：去掉 `.page` padding-bottom 解决
 - 回退过的方案：`.page` 改 flex column（导致多页面 bug，勿再启用）
+- CSS 覆盖要写在基础规则之后或用更高选择器优先级：`.opp-tabs` 与 `.filter-tabs` 同为单类选择器，先写者被后写者覆盖 → 改用 `.opp-sheet .filter-tabs`
