@@ -40,6 +40,9 @@
     book: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 5.5v14"/>',
     external: '<path d="M15 3h6v6M10 14 21 3M18 13v7a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h7"/>',
     sparkle: '<path d="m12 3 1.4 4.1L17.5 8.5l-4.1 1.4L12 14l-1.4-4.1-4.1-1.4 4.1-1.4zM19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8z"/>',
+    zap: '<path d="M13 2 4 14h6l-1 8 9-12h-6z"/>',
+    coins: '<ellipse cx="12" cy="5.5" rx="7" ry="3"/><path d="M5 5.5v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6M5 11.5v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/>',
+    sort: '<path d="M7 4v16M4 7l3-3 3 3M17 20V4M14 17l3 3 3-3"/>',
     layers: '<path d="m12 2 9 5-9 5-9-5zM3 12l9 5 9-5M3 17l9 5 9-5"/>',
     tax: '<path d="M6 2h12v20H6zM9 6h6M9 10h6M9 14h2M14 14h1M9 18h2M14 18h1"/>',
     close: '<path d="M18 6 6 18M6 6l12 12"/>',
@@ -57,6 +60,31 @@
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
+  }
+
+  function saveChartSvg(shadowId) {
+    return `<svg viewBox="0 0 150 132" aria-hidden="true">
+      <defs>
+        <filter id="${shadowId}" x="-30%" y="-30%" width="160%" height="180%"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#1e4680" flood-opacity="0.18"/></filter>
+      </defs>
+      <rect x="12" y="102" width="16" height="26" rx="4" fill="#cfe3fb"/>
+      <rect x="38" y="88" width="16" height="40" rx="4" fill="#b7d4f9"/>
+      <rect x="64" y="72" width="16" height="56" rx="4" fill="#96bef6"/>
+      <rect x="90" y="56" width="16" height="72" rx="4" fill="#6ba5f0"/>
+      <rect x="114" y="48" width="16" height="80" rx="4" fill="#4a8fe8"/>
+      <path d="M20 96 L46 82 L72 66 L98 50 L122 44" fill="none" stroke="#9cc4f5" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="20" cy="96" r="2.5" fill="#8fbcf2"/>
+      <circle cx="46" cy="82" r="2.5" fill="#8fbcf2"/>
+      <circle cx="72" cy="66" r="2.5" fill="#8fbcf2"/>
+      <circle cx="98" cy="50" r="2.5" fill="#8fbcf2"/>
+      <g filter="url(#${shadowId})">
+        <rect x="88" y="2" width="62" height="32" rx="9" fill="#fff"/>
+        <polygon points="114,33.5 126,33.5 122,44" fill="#fff"/>
+      </g>
+      <text x="119" y="15" text-anchor="middle" font-size="8" fill="#8296b0" font-family="-apple-system,'PingFang SC',sans-serif">最高可节税</text>
+      <text x="119" y="29" text-anchor="middle" font-size="12.5" font-weight="700" fill="#0b57c9" font-family="-apple-system,'PingFang SC',sans-serif">14.2 万元</text>
+      <circle cx="122" cy="44" r="5.5" fill="#fff" stroke="#2f86ff" stroke-width="3"/>
+    </svg>`;
   }
 
   const companiesSeed = [
@@ -126,52 +154,64 @@
 
   const questions = [
     {
-      key: "industry",
-      title: "你的企业所属行业是？",
-      help: "行业将影响优惠政策、研发口径与部分地方政策的匹配。",
-      options: ["软件和信息技术服务业", "制造业", "批发和零售业", "建筑与房地产", "文化创意与传媒", "其他行业"]
+      key: "penalty",
+      title: "近 3 年，贵公司是否有过税务处罚或纳税信用等级变更？",
+      help: "分析维度：税务处罚记录、纳税信用等级变动",
+      options: ["没有，信用等级一直稳定", "有过税务行政处罚（罚款/警告）", "纳税信用等级发生过降级", "不清楚/未查询过"]
     },
     {
-      key: "region",
-      title: "企业主要经营所在地是？",
-      help: "税收政策存在地区差异，我们会优先匹配当地有效政策。",
-      options: ["浙江省杭州市", "上海市", "江苏省南京市", "广东省深圳市", "北京市", "其他地区"]
+      key: "invoice-match",
+      title: "近 3 年，贵公司进项发票中，是否存在“税号或企业名称”与供应商实际信息不一致的情况？",
+      help: "分析维度：发票税号名称不匹配风险",
+      options: ["从未出现，全部一致", "偶尔有，已要求对方重开", "经常出现，需要频繁手工调整", "不清楚"]
     },
     {
-      key: "taxpayer",
-      title: "企业的增值税纳税人类型是？",
-      help: "不同纳税人类型适用的税率、征收方式和优惠可能不同。",
-      options: ["一般纳税人", "小规模纳税人"]
+      key: "cross-region",
+      title: "近 3 年，贵公司的采购和销售业务，是否主要集中在注册地以外的地区？",
+      help: "分析维度：购销两头在外风险",
+      options: ["不存在，业务主要在本地", "部分业务在外地，但正常经营", "大部分购销都在外地，本地无实际经营场所", "不清楚"]
     },
     {
-      key: "revenue",
-      title: "上一年度营业收入大约是？",
-      help: "只需选择区间，Demo 不会采集精确财务数据。",
-      options: ["300万元以下", "300万–1000万元", "1000万–5000万元", "5000万元–1亿元", "1亿元以上"]
+      key: "red-flush",
+      title: "近 3 年，贵公司发票的“红冲”和“作废”情况如何？",
+      help: "分析维度：红冲作废分析",
+      options: ["非常少，属于正常范围", "偶尔有，都能合理解释", "频繁红冲/作废，占比明显偏高", "不清楚"]
     },
     {
-      key: "employees",
-      title: "企业从业人数大约是？",
-      help: "从业人数是判断小型微利企业等政策的重要条件。",
-      options: ["10人以内", "11–50人", "51–100人", "101–300人", "300人以上"]
+      key: "customer-risk",
+      title: "近 3 年，贵公司前十大客户中，是否有被行政处罚的记录？",
+      help: "分析维度：前十大客户行政处罚信息",
+      options: ["没有，客户均为正常经营企业", "有一两个客户有过处罚记录", "有多个客户存在处罚记录", "不清楚"]
     },
     {
-      key: "profit",
-      title: "上一年度应纳税所得额大约是？",
-      help: "用于判断所得税优惠适用范围，仅作初步匹配。",
-      options: ["100万元以内", "100万–300万元", "300万–500万元", "500万元以上", "尚未盈利"]
+      key: "scale-match",
+      title: "近 3 年，贵公司开票规模与公司实际经营规模（员工人数、办公场地、营业收入）是否匹配？",
+      help: "分析维度：公司规模与开票额匹配分析",
+      options: ["完全匹配，开票额与经营规模一致", "部分月份开票额偏高，但能合理解释", "开票额远高于实际规模（如人员很少但开票量巨大）", "不清楚"]
     },
     {
-      key: "rd",
-      title: "企业是否开展研发活动？",
-      help: "研发活动可能涉及研发费用加计扣除和高新技术企业等政策。",
-      options: ["有研发项目并建立辅助账", "有研发活动，尚未建账", "暂未开展研发活动"]
+      key: "sensitive-invoice",
+      title: "近 3 年，贵公司进项发票中，咨询费、服务费、会议费等“敏感业务”发票占比是否偏高？",
+      help: "分析维度：敏感进项发票分析",
+      options: ["没有，进项结构正常", "有一些，但比例正常", "敏感业务发票占比明显过高", "不清楚"]
     },
     {
-      key: "benefit",
-      title: "目前已享受哪些税收优惠？",
-      help: "帮助我们识别漏享、错享或需要持续满足的条件。",
-      options: ["小型微利企业所得税优惠", "研发费用加计扣除", "高新技术企业优惠", "暂未享受", "记不清楚"]
+      key: "mutual-invoice",
+      title: "近 3 年，贵公司是否与同一企业存在频繁的互开发票（对开/环开）情况？",
+      help: "分析维度：互开发票风险",
+      options: ["没有，上下游清晰", "有少量，属于正常业务往来", "存在明显的互开发票现象", "不清楚"]
+    },
+    {
+      key: "risk-notice",
+      title: "近 3 年，贵公司是否收到过税务机关的“风险提示”或“自查通知”？",
+      help: "分析维度：税务风险提示/自查通知记录",
+      options: ["从未收到过", "收到过，已按要求自查并整改", "收到过，但尚未处理完毕", "不清楚"]
+    },
+    {
+      key: "tax-mgmt",
+      title: "贵公司目前的税务管理方式是？",
+      help: "分析维度：税务管理能力评估",
+      options: ["有专职财务/税务人员，且定期参加税务培训", "有专职财务，但税务知识更新不及时", "委托代账公司处理，自己不审核", "老板自己处理，没有专业财务"]
     }
   ];
 
@@ -269,14 +309,16 @@
   ];
 
   const answerLabels = {
-    industry: "所属行业",
-    region: "经营所在地",
-    taxpayer: "纳税人类型",
-    revenue: "年度营业收入",
-    employees: "从业人数",
-    profit: "应纳税所得额",
-    rd: "研发情况",
-    benefit: "已享受优惠"
+    "penalty": "处罚与信用等级",
+    "invoice-match": "发票信息一致性",
+    "cross-region": "购销地域分布",
+    "red-flush": "红冲作废情况",
+    "customer-risk": "客户处罚记录",
+    "scale-match": "规模匹配度",
+    "sensitive-invoice": "敏感进项占比",
+    "mutual-invoice": "互开发票",
+    "risk-notice": "风险提示记录",
+    "tax-mgmt": "税务管理方式"
   };
 
   function saveState() {
@@ -436,7 +478,7 @@
           <div class="checkup-hero-content">
             <div class="checkup-status">${icon("check", 14)} 本次体检已完成</div>
             <h2>机会看得见，风险早一步</h2>
-            <p>已基于 8 项企业画像、3 类政策规则与 2 份演示材料进行分析。</p>
+            <p>已基于 10 项企业画像、3 类政策规则与 2 份演示材料进行分析。</p>
           </div>
           <div class="checkup-hero-actions">
             <button class="btn checkup-btn-primary" data-route="report">查看完整报告 ${icon("arrow", 17)}</button>
@@ -460,33 +502,84 @@
     }
 
     return layout(`
-      ${statusBar()}
-      <div class="page-head" style="position:relative"><div class="head-copy"><h1>AI 税务体检</h1><p>${escapeHtml(company.name)}</p></div><button class="icon-btn soft" data-action="company-switch">${icon("building", 20)}</button></div>
-      <section class="checkup-hero">
-        <div class="eyebrow" style="color:#b5eaff">${icon("sparkle", 15)} 第一次体检约 3 分钟</div>
-        <h1>先了解企业，再给专属答案</h1>
-        <p>通过简短画像，帮你找到可享政策和需要关注的风险。</p>
-        <div class="checkup-seal">${icon("scan", 32)}</div>
-        <button class="btn hero-primary" data-route="assessment-intro">开始首次体检 ${icon("arrow", 17)}</button>
-      </section>
-      <section class="section" style="margin-top:8px">
-        <div class="section-title"><h2>你将获得</h2></div>
-        <div class="stack">
-          <div class="feature-point"><span class="mini-icon">${icon("gift", 21)}</span><div><strong>专属政策机会</strong><span>不只列政策，更解释为什么与你有关</span></div></div>
-          <div class="feature-point"><span class="mini-icon">${icon("shield", 21)}</span><div><strong>分级风险提醒</strong><span>区分画像提示与材料核验发现</span></div></div>
-          <div class="feature-point"><span class="mini-icon">${icon("report", 21)}</span><div><strong>优先行动清单</strong><span>告诉你先做什么、准备哪些材料</span></div></div>
+      <section class="checkup-first-hero">
+        ${statusBar(true)}
+        <div class="checkup-hero-top">
+          <button class="icon-btn light" data-action="back" aria-label="返回">${icon("back", 22)}</button>
+          <div style="min-width:0"><h1>AI 税务体检</h1><p>${escapeHtml(company.name)}</p></div>
+          <button class="icon-btn light" data-action="company-switch" aria-label="切换企业">${icon("report", 20)}</button>
+        </div>
+        <div class="checkup-pill-row"><span class="checkup-pill">${icon("clock", 13)} 3 分钟完成 · 基于企业画像精准分析</span></div>
+        <div class="checkup-first-body">
+          <div class="checkup-first-copy">
+            <h2>先了解企业<br>再给专属答案</h2>
+            <p>通过企业信息和政策规则，全面识别税务机会、潜在风险与优化建议。</p>
+            <button class="btn checkup-btn-primary" data-route="assessment-intro" style="flex:none;width:auto;margin-top:18px;padding:0 22px">开始首次体检 ${icon("arrow", 17)}</button>
+          </div>
+          <div class="checkup-3d" aria-hidden="true">
+            <svg viewBox="0 0 200 190" fill="none">
+              <defs>
+                <linearGradient id="cfDocG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f2f8ff"/><stop offset="1" stop-color="#c9defc"/></linearGradient>
+                <linearGradient id="cfPodG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6db2ff"/><stop offset="1" stop-color="#1d5fd6"/></linearGradient>
+              </defs>
+              <ellipse cx="108" cy="168" rx="84" ry="13" fill="#0a2f7f" opacity=".45"/>
+              <ellipse cx="108" cy="162" rx="84" ry="15" fill="url(#cfPodG)"/>
+              <ellipse cx="108" cy="159" rx="64" ry="9" fill="#8ec6ff" opacity=".5"/>
+              <g transform="rotate(-7 96 92)">
+                <rect x="46" y="16" width="102" height="134" rx="14" fill="url(#cfDocG)" stroke="#fff" stroke-opacity=".7"/>
+                <rect x="62" y="34" width="52" height="7" rx="3.5" fill="#9cc4f5"/>
+                <rect x="62" y="48" width="70" height="7" rx="3.5" fill="#b8d6f8"/>
+                <rect x="62" y="62" width="40" height="7" rx="3.5" fill="#b8d6f8"/>
+                <text x="66" y="110" font-size="32" font-weight="700" fill="#1266d8" font-family="-apple-system,'PingFang SC',sans-serif">税</text>
+                <rect x="62" y="124" width="10" height="14" rx="2" fill="#5ea0ef"/>
+                <rect x="76" y="118" width="10" height="20" rx="2" fill="#3f8ce8"/>
+                <rect x="90" y="112" width="10" height="26" rx="2" fill="#1266d8"/>
+                <rect x="104" y="106" width="10" height="32" rx="2" fill="#0b4fb0"/>
+              </g>
+              <circle cx="152" cy="104" r="27" fill="rgba(140,200,255,.3)" stroke="#2f86ff" stroke-width="9"/>
+              <path d="M172 126 190 146" stroke="#2f86ff" stroke-width="12" stroke-linecap="round"/>
+            </svg>
+          </div>
+        </div>
+        <div class="checkup-trio">
+          <div class="trio-item"><span class="trio-ico">${icon("zap", 17)}</span><div><b>3 分钟完成</b><small>快速生成报告</small></div></div>
+          <div class="trio-item"><span class="trio-ico">${icon("scan", 17)}</span><div><b>基于政策规则</b><small>多维度智能分析</small></div></div>
+          <div class="trio-item"><span class="trio-ico">${icon("shield", 17)}</span><div><b>专业可靠</b><small>数据加密安全</small></div></div>
         </div>
       </section>
-      <section class="history-preview card">
-        <div class="history-preview-head"><h3>示例报告预览</h3><button class="text-link" data-route="report">先看示例</button></div>
-        <div class="metric-row">
-          <div class="metric green"><b>3</b><span>政策机会</span></div>
-          <div class="metric orange"><b>2</b><span>风险提醒</span></div>
-          <div class="metric blue"><b>A-</b><span>综合建议</span></div>
-        </div>
-      </section>
-      ${trustNote()}
-    `, "checkup", { className: "page-bg-blue" });
+      <div class="checkup-sheet">
+        <section class="checkup-sheet-sec">
+          <div class="sheet-title"><h2>你将获得</h2><button class="text-link" data-route="report">查看示例报告 ${icon("chevron", 15)}</button></div>
+          <div class="get-tiles">
+            <div class="get-tile green"><span class="tile-ico">${icon("gift", 20)}</span><b>专属政策机会</b><p>自动匹配你可享受的税收优惠政策</p></div>
+            <div class="get-tile orange"><span class="tile-ico">${icon("alert", 20)}</span><b>分级风险提醒</b><p>识别潜在税务风险，提供应对建议</p></div>
+            <div class="get-tile blue"><span class="tile-ico">${icon("report", 20)}</span><b>优先行动清单</b><p>明确该做什么、准备哪些材料</p></div>
+          </div>
+        </section>
+        <section class="checkup-sheet-sec">
+          <div class="sheet-title"><h2>示例报告预览</h2><button class="text-link" data-route="report">查看完整示例 ${icon("chevron", 15)}</button></div>
+          <div class="preview-body">
+            <div class="preview-docs">
+              <div class="pdoc back-doc"></div>
+              <div class="pdoc front-doc"><b>企业税务体检报告</b><i></i><i style="width:80%"></i><i style="width:55%"></i><div class="pchart"><span style="height:35%"></span><span style="height:55%"></span><span style="height:75%"></span><span style="height:100%"></span></div></div>
+            </div>
+            <div class="preview-side">
+              <div class="metric-row bare">
+                <div class="metric green"><b>3<small>项</small></b><span>政策机会</span></div>
+                <div class="metric orange"><b>2<small>项</small></b><span>风险提醒</span></div>
+                <div class="metric blue"><b>A-</b><span>综合建议</span></div>
+              </div>
+              <div class="preview-list">
+                <div class="prow"><span class="p-ico green">${icon("check", 11)}</span>匹配可享受的税收优惠政策</div>
+                <div class="prow"><span class="p-ico orange">${icon("alert", 10)}</span>发现需关注的潜在风险</div>
+                <div class="prow"><span class="p-ico blue">${icon("report", 10)}</span>提供针对性的优化建议与行动清单</div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <div class="checkup-note">${icon("info", 15)}<span>本次体检基于企业画像、政策规则与行业数据进行智能分析，结果仅供参考，不替代专业税务意见。</span></div>
+      </div>
+    `, "checkup");
   }
 
   function assessmentIntroPage() {
@@ -494,13 +587,13 @@
       ${statusBar()}
       ${pageHead("AI 税务体检", "约 3 分钟完成最小企业画像")}
       <div class="intro-visual"><div class="doc"><i></i><i></i><i style="width:65%"></i></div><div class="lens"></div></div>
-      <div class="center-copy"><h1>先了解企业，再精准判断</h1><p>回答 8 个简单问题，系统会结合政策依据与演示规则，生成企业专属的机会、风险和行动建议。</p></div>
+      <div class="center-copy"><h1>先了解企业，再精准判断</h1><p>回答 10 个简单问题，系统会结合政策依据与演示规则，生成企业专属的机会、风险和行动建议。</p></div>
       <div class="feature-points">
         <div class="feature-point"><span class="mini-icon intro-img"><img src="./intro-clock.png" alt="" width="42" height="42"></span><div><strong>渐进式采集</strong><span>不清楚的信息可以跳过，不会阻断体检</span></div></div>
         <div class="feature-point"><span class="mini-icon intro-img"><img src="./intro-shield.png" alt="" width="42" height="42"></span><div><strong>隐私边界清晰</strong><span>当前为本地 Demo，不会上传你的真实文件</span></div></div>
         <div class="feature-point"><span class="mini-icon intro-img"><img src="./intro-doc.png" alt="" width="42" height="42"></span><div><strong>结论可解释</strong><span>每条结果提供政策依据、条件和更新时间</span></div></div>
       </div>
-      <div class="sticky-cta"><button class="btn primary block" data-route="assessment-method">开始体检 ${icon("arrow", 18)}</button></div>
+      <div class="sticky-cta cta-flush"><button class="btn primary block" data-route="assessment-method">开始体检 ${icon("arrow", 18)}</button></div>
     `, null, { className: "page-bg-blue" });
   }
 
@@ -514,7 +607,7 @@
           <span class="mini-icon">${icon("camera", 25)}</span><span style="flex:1"><h3>识别营业执照</h3><p>使用示例执照体验 OCR 自动录入</p></span>${icon("chevron", 20, 'class="chev"')}
         </button>
         <button class="method-card card tap-card" data-action="start-questionnaire">
-          <span class="mini-icon" style="color:var(--green);background:var(--green-soft)">${icon("edit", 25)}</span><span style="flex:1"><h3>直接补充企业信息</h3><p>基于当前企业档案完成 8 项关键画像</p></span>${icon("chevron", 20, 'class="chev"')}
+          <span class="mini-icon" style="color:var(--green);background:var(--green-soft)">${icon("edit", 25)}</span><span style="flex:1"><h3>直接补充企业信息</h3><p>基于当前企业档案完成 10 项关键画像</p></span>${icon("chevron", 20, 'class="chev"')}
         </button>
       </div>
       <div class="section">
@@ -531,20 +624,24 @@
       ${statusBar()}
       ${pageHead("完善企业画像", `${state.questionIndex + 1} / ${questions.length}`)}
       <div class="progress-wrap"><div class="progress-meta"><span>关键画像采集</span><span>${Math.round(pct)}%</span></div><div class="progress-track"><i style="width:${pct}%"></i></div></div>
+      <div class="save-band compact">
+        <span class="s-ico">${icon("coins", 18)}</span>
+        <div class="s-copy"><small>预计可节税区间 ${icon("info", 12)}</small><strong>8.6 – 14.2 <span>万元/年</span></strong></div>
+        <div class="save-chart">${saveChartSvg("sbShadowQ")}</div>
+      </div>
       <section class="question-wrap">
         <div class="eyebrow">问题 ${state.questionIndex + 1}</div>
         <h1>${q.title}</h1>
         <p class="question-help">${q.help}</p>
         <div class="choices">
           ${q.options.map((option) => `<button class="choice ${selected === option ? "selected" : ""}" data-action="select-answer" data-value="${escapeHtml(option)}"><span>${option}</span><i class="radio"></i></button>`).join("")}
-          <button class="unknown-btn" data-action="unknown-answer">不清楚，先跳过</button>
         </div>
       </section>
-      <div class="sticky-cta">
+      <div class="sticky-cta cta-flush">
         <button class="btn ghost" data-action="prev-question" ${state.questionIndex === 0 ? "disabled" : ""}>上一步</button>
-        <button class="btn primary" data-action="next-question" ${selected ? "" : "disabled"}>${state.questionIndex === questions.length - 1 ? "确认画像" : "下一步"} ${icon("arrow", 17)}</button>
+        <button class="btn primary" data-action="next-question">${state.questionIndex === questions.length - 1 ? "确认画像" : "下一步"} ${icon("arrow", 17)}</button>
       </div>
-    `, null, { className: "page-bg-blue" });
+    `, null, { className: "page-bg-blue page-flex" });
   }
 
   function profileConfirmPage() {
@@ -588,36 +685,88 @@
   function reportPage() {
     const company = currentCompany();
     return layout(`
+      <div class="report-scroll-area">
       <section class="report-hero">
         ${statusBar(true)}
-        <div class="report-hero-top"><button class="icon-btn light" data-action="back" aria-label="返回">${icon("back", 23)}</button><div><h1>企业税务体检报告</h1><p>生成于 ${APP_DATE} · 政策库更新至 2026.10.10</p></div></div>
-        <div class="company-report"><span class="mini-icon">${icon("building", 22)}</span><div style="min-width:0"><strong>${escapeHtml(company.name)}</strong><small>${escapeHtml(company.industry)} · ${escapeHtml(company.taxpayer)}</small></div></div>
+        <div class="report-hero-top">
+          <button class="icon-btn light" data-action="back" aria-label="返回">${icon("back", 22)}</button>
+          <div style="min-width:0;flex:1"><h1>企业税务体检报告</h1><p>生成于 ${APP_DATE} · 政策库更新至 2026.10.10</p></div>
+          <button class="icon-btn light" data-action="company-switch" aria-label="切换企业">${icon("report", 20)}</button>
+        </div>
+        <div class="company-report">
+          <span class="mini-icon">${icon("building", 22)}</span>
+          <div style="min-width:0"><strong>${escapeHtml(company.name)}</strong><small>${escapeHtml(company.industry)} · ${escapeHtml(company.taxpayer)}</small></div>
+          <div class="report-3d" aria-hidden="true">
+            <svg viewBox="0 0 110 100" fill="none">
+              <defs><linearGradient id="rpDocG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4f9ff"/><stop offset="1" stop-color="#cfe2fc"/></linearGradient></defs>
+              <g transform="rotate(-8 55 45)">
+                <rect x="22" y="6" width="56" height="76" rx="9" fill="url(#rpDocG)" stroke="#fff" stroke-opacity=".75"/>
+                <rect x="32" y="18" width="26" height="5" rx="2.5" fill="#9cc4f5"/>
+                <rect x="32" y="28" width="36" height="5" rx="2.5" fill="#b8d6f8"/>
+                <text x="30" y="64" font-size="22" font-weight="700" fill="#1266d8" font-family="-apple-system,'PingFang SC',sans-serif">税</text>
+              </g>
+              <circle cx="82" cy="72" r="17" fill="#2f86ff" stroke="rgba(255,255,255,.5)" stroke-width="2"/>
+              <path d="m75 72 5 5 9-10" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
       </section>
-      <div class="report-summary">
-        <div class="summary-tile green"><small>政策机会</small><strong>3</strong><span>2 项高匹配</span></div>
-        <div class="summary-tile orange"><small>风险提醒</small><strong>2</strong><span>1 项需优先</span></div>
-        <div class="summary-tile blue"><small>画像完整度</small><strong>86%</strong><span>1 项待补</span></div>
+      <div class="report-sheet">
+        <section class="health-card">
+          <div class="sheet-title"><h2>企业税务健康度 ${icon("info", 15)}</h2></div>
+          <div class="health-body">
+            <div class="ring-wrap">
+              <svg viewBox="0 0 120 120" class="ring" aria-hidden="true">
+                <circle cx="60" cy="60" r="52" stroke="#dbe9fb" stroke-width="11" fill="none"/>
+                <circle cx="60" cy="60" r="52" stroke="#2f86ff" stroke-width="11" fill="none" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="45.7" transform="rotate(-90 60 60)"/>
+              </svg>
+              <div class="ring-center"><b>86%</b><span>整体健康度</span><em>良好</em></div>
+            </div>
+            <div class="health-rows">
+              <button class="hrow" data-route="opportunities"><span class="h-ico green">${icon("shield", 18)}</span><div class="h-copy"><b>3<small>项</small></b><span>政策机会</span></div>${icon("chevron", 16, 'class="h-chev"')}</button>
+              <button class="hrow" data-route="risks"><span class="h-ico orange">${icon("alert", 18)}</span><div class="h-copy"><b>2<small>项</small></b><span>风险提醒</span></div>${icon("chevron", 16, 'class="h-chev"')}</button>
+              <button class="hrow" data-route="profile-confirm"><span class="h-ico blue">${icon("report", 18)}</span><div class="h-copy"><b>1<small>项</small></b><span>待优化</span></div>${icon("chevron", 16, 'class="h-chev"')}</button>
+            </div>
+          </div>
+          <div class="save-band">
+            <span class="s-ico">${icon("coins", 22)}</span>
+            <div class="s-copy">
+              <small>预计可节税区间 ${icon("info", 12)}</small>
+              <strong>8.6 – 14.2 <span>万元/年</span></strong>
+              <p>基于所选营收、所得额与研发情况估算</p>
+            </div>
+            <div class="save-chart">${saveChartSvg("sbShadow")}</div>
+          </div>
+        </section>
+        <div class="sheet-sec">
+          <div class="sheet-sec-head"><h3>重点发现</h3><button class="text-link">查看完整报告 ${icon("chevron", 15)}</button></div>
+          <div class="find-grid">
+            <button class="find-card green" data-route="opportunities">
+              <div class="f-head"><span class="f-ico">${icon("gift", 19)}</span><b>政策红利匹配</b></div>
+              <div class="f-count"><strong>3</strong><small>项</small></div>
+              <p>存在可享受的税收优惠政策，建议尽快申报</p>
+              ${icon("chevron", 16, 'class="f-chev"')}
+            </button>
+            <button class="find-card orange" data-route="risks">
+              <div class="f-head"><span class="f-ico">${icon("alert", 19)}</span><b>税务风险提醒</b></div>
+              <div class="f-count"><strong>2</strong><small>项</small></div>
+              <p>发现潜在税务风险，建议重点关注</p>
+              ${icon("chevron", 16, 'class="f-chev"')}
+            </button>
+          </div>
+        </div>
+        <div class="sheet-sec">
+          <div class="sheet-sec-head"><h3>建议优先处理</h3><span class="sort-note">按影响程度排序 ${icon("sort", 13)}</span></div>
+          <div class="prio-list">
+            <div class="prio-item"><span class="p-no">1</span><div class="p-copy"><b>补齐研发项目材料归集</b><p>完善 3 笔研发费用归集资料，降低加计扣除风险</p></div>${icon("chevron", 18, 'class="p-chev"')}</div>
+            <div class="prio-item"><span class="p-no">2</span><div class="p-copy"><b>检查进项发票合规性</b><p>存在 1 项进项发票需进一步核验</p></div>${icon("chevron", 18, 'class="p-chev"')}</div>
+            <div class="prio-item"><span class="p-no ghost">3</span><div class="p-copy"><b>评估软件产品即征即退资格</b><p>补充软件登记与销售结构后再测算可退税额</p></div>${icon("chevron", 18, 'class="p-chev"')}</div>
+          </div>
+        </div>
       </div>
-      <div class="estimate-card"><small>测算可节税区间</small><strong>8.6–14.2 万元/年</strong><span>基于所选营收、所得额与研发情况区间估算，最终以实际申报口径为准</span></div>
-      <section class="section">
-        <div class="section-title"><h2>体检结果</h2><span class="tag green">已完成</span></div>
-        <div class="stack">
-          <button class="result-card card tap-card green" data-route="opportunities"><span class="mini-icon">${icon("gift", 24)}</span><span class="copy"><h3>政策红利匹配</h3><p>3 项机会 · 其中 2 项可优先核验</p></span>${icon("chevron", 20, 'class="chev"')}</button>
-          <button class="result-card card tap-card orange" data-route="risks"><span class="mini-icon">${icon("alert", 24)}</span><span class="copy"><h3>税务风险提醒</h3><p>2 项提醒 · 1 项来自材料样例核验</p></span>${icon("chevron", 20, 'class="chev"')}</button>
-        </div>
-      </section>
-      <section class="section">
-        <div class="section-title"><h2>建议优先处理</h2><span style="font-size:11px;color:var(--muted)">按影响与可执行性排序</span></div>
-        <div class="action-list card">
-          <div class="action-item"><div><strong>补齐研发项目材料归集</strong><p>先关联 3 笔材料费用与对应研发项目，降低扣除风险。</p></div></div>
-          <div class="action-item"><div><strong>复核小型微利企业资产口径</strong><p>按季度平均值确认资产总额，完成优惠条件闭环。</p></div></div>
-          <div class="action-item"><div><strong>评估软件产品即征即退资格</strong><p>补充软件登记与销售结构后再测算可退税额。</p></div></div>
-        </div>
-      </section>
-      <section class="section"><div class="subtle-note">${icon("info", 18)}<span>本报告区分“画像规则提示”和“材料样例核验”。正式申报前请结合真实资料并由专业人员复核。</span></div></section>
-      ${trustNote()}
-      <div class="sticky-cta"><button class="btn secondary" data-action="export-report">${icon("download", 17)} 导出 PDF</button><button class="btn primary" data-action="ask-ai" data-context="整份税务体检报告">${icon("bot", 17)} 问 AI</button></div>
-    `, null, { className: "page-bg-blue" });
+      </div>
+      <div class="sticky-cta report-cta"><button class="btn secondary" data-action="export-report">${icon("download", 17)} 导出 PDF 报告</button><button class="btn primary" data-action="ask-ai" data-context="整份税务体检报告">${icon("bot", 17)} 问 AI 解读</button></div>
+    `, null, { className: "report-page-bg report-scroll" });
   }
 
   function opportunitiesPage() {
@@ -1028,7 +1177,7 @@
         else if (currentRoute === "case") go(routeParams.returnTo === "home" ? "home" : "search");
         else if (currentRoute === "assessment-intro") go("checkup");
         else if (currentRoute === "assessment-method") go("assessment-intro");
-        else if (currentRoute === "profile-confirm") go("questionnaire");
+        else if (currentRoute === "profile-confirm") go(routeParams.returnTo === "report" ? "report" : "questionnaire");
         else if (["opportunities", "risks"].includes(currentRoute)) go("report");
         else if (currentRoute === "report") go(routeParams.returnTo === "histories" ? "histories" : "checkup");
         else if (currentRoute === "search") go("home");
@@ -1076,19 +1225,12 @@
         render();
         break;
       }
-      case "unknown-answer": {
-        const q = questions[state.questionIndex];
-        state.assessmentAnswers[q.key] = "暂不清楚";
-        saveState();
-        if (state.questionIndex < questions.length - 1) {
-          state.questionIndex += 1;
-          render();
-        } else go("profile-confirm");
-        break;
-      }
       case "next-question": {
         const q = questions[state.questionIndex];
-        if (!state.assessmentAnswers[q.key]) return;
+        if (!state.assessmentAnswers[q.key]) {
+          showToast("请先选择一个选项");
+          return;
+        }
         if (state.questionIndex < questions.length - 1) {
           state.questionIndex += 1;
           saveState();
