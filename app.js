@@ -147,7 +147,11 @@
       files: [
         { name: "研发费用辅助账_2025.xlsx", type: "财务资料", date: "2026.10.02", status: "已完成归集检查" },
         { name: "增值税申报表_9月.pdf", type: "申报表", date: "2026.10.01", status: "已完成异常检查" }
-      ]
+      ],
+      auth: { isLoggedIn: false, phone: "", name: "" },
+      authSkipped: false,
+      authTab: "login",
+      smsCountdown: 0
     };
   }
 
@@ -161,11 +165,12 @@
   }
 
   let state = loadState();
-  let currentRoute = "home";
+  let currentRoute = (state.auth?.isLoggedIn || state.authSkipped) ? "home" : "auth";
   let routeParams = {};
   let modal = null;
   let toastTimer = null;
   let analysisTimer = null;
+let smsTimer = null;
 
   const questions = [
     {
@@ -398,7 +403,7 @@
     return `<div class="phone-frame"><div class="phone-screen"><div class="app-shell"><main class="page ${noNav ? "no-nav" : ""} ${options.className || ""}">${content}</main>${active ? bottomNav(active) : ""}${renderModal()}${renderToast()}</div></div></div>`;
   }
 
-  const ROOT_ROUTES = ["home", "checkup", "ai", "profile"];
+  const ROOT_ROUTES = ["home", "checkup", "ai", "profile", "auth"];
   const navStack = [];
 
   // record=false 时不压栈（用于"返回"）；analyzing 为过渡页，不作为返回目标
@@ -1029,11 +1034,16 @@
           </svg>
         </div>
         <div class="profile-full-person">
+          ${state.auth.isLoggedIn ? `
           <span class="person-avatar">${icon("user", 28)}</span>
           <div class="profile-full-name">
-            <h1>刘予涵 ${icon("chevron", 16, 'class="name-chev"')}</h1>
-            <p>企业管理员 · 已完成实名认证</p>
+            <h1>${escapeHtml(state.auth.name)}</h1>
+            <p>已登录 · 演示账号</p>
           </div>
+          ` : `
+          <span class="person-avatar" style="border-color:transparent;color:#8f9bb3;background:#e8ecf2;box-shadow:none"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="10" r="5" fill="#8f9bb3"/><path d="M4 26c0-5.5 4.5-10 10-10s10 4.5 10 10" fill="#8f9bb3"/></svg></span>
+          <button class="profile-auth-entry" data-route="auth" style="display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 20px;border:1px solid rgba(255,255,255,.28);border-radius:14px;color:#fff;background:rgba(255,255,255,.08);font-size:14px;font-weight:680">${icon("user", 17)} 登录 / 注册</button>
+          `}
         </div>
         <div class="profile-stats">
           <div class="profile-stat"><b>${state.companies.length}</b><span>管理企业</span></div>
@@ -1049,6 +1059,7 @@
         <button class="asset-row card tap-card" data-route="chats"><span class="asset-icon asset-img"><img src="./profile-chat.png" alt="" width="42" height="42"></span><span class="copy"><strong>AI 历史会话</strong><span>继续此时与企业上下文的咨询</span></span>${icon("chevron", 19, 'class="chev"')}</button>
         <button class="asset-row card tap-card" data-route="files"><span class="asset-icon asset-img"><img src="./profile-folder.png" alt="" width="42" height="42"></span><span class="copy"><strong>文件记录</strong><span>管理历史上传资料与解析结果</span></span>${icon("chevron", 19, 'class="chev"')}</button>
         <button class="btn reset-demo-btn" data-action="reset-demo">${icon("layers", 18)} 重置 Demo 数据</button>
+	        ${state.auth.isLoggedIn ? `<button class="profile-logout-btn" data-action="logout">${icon("back", 14)} 退出登录</button>` : ""}
       </section>
       <div class="trust-note">演示数据仅用于产品体验 · 结果为辅助决策建议，不替代专业税务意见</div>
     `, "profile");
@@ -1116,6 +1127,40 @@
     `, null, { className: "page-bg-blue" });
   }
 
+  function authPage() {
+    const isLogin = state.authTab !== "register";
+    return layout(`
+      <section class="auth-page">
+        <div class="auth-brand">
+          <span class="auth-brand-mark">税</span>
+          <h1>税策通</h1>
+          <p>智能税务决策助手</p>
+        </div>
+        <div class="auth-card">
+          <div class="auth-tabs">
+            <button class="auth-tab ${isLogin ? "active" : ""}" data-action="auth-tab" data-value="login">登录</button>
+            <button class="auth-tab ${!isLogin ? "active" : ""}" data-action="auth-tab" data-value="register">注册</button>
+          </div>
+          <form class="auth-form" id="auth-form">
+            <input class="auth-input" id="auth-phone" type="tel" maxlength="11" placeholder="请输入手机号" autocomplete="tel" />
+            ${isLogin ? `
+              <input class="auth-input" id="auth-password" type="password" placeholder="请输入密码" autocomplete="current-password" />
+            ` : `
+              <div class="sms-row">
+                <input class="auth-input" id="auth-sms-code" type="text" maxlength="6" placeholder="验证码" autocomplete="off" />
+                <button type="button" class="sms-btn ${state.smsCountdown > 0 ? "counting" : ""}" data-action="send-sms" ${state.smsCountdown > 0 ? "disabled" : ""}>${state.smsCountdown > 0 ? state.smsCountdown + "s 后重发" : "发送验证码"}</button>
+              </div>
+              <input class="auth-input" id="auth-password" type="password" placeholder="设置密码（6-16位）" autocomplete="new-password" />
+            `}
+            <button type="submit" class="auth-submit">${isLogin ? "登录" : "注册"}</button>
+          </form>
+          <p class="auth-footer">登录即表示同意《用户协议》和《隐私政策》<br />演示 Demo · 不收集真实信息</p>
+        </div>
+        <button class="auth-skip" data-action="auth-skip">跳过，先体验 Demo</button>
+      </section>
+    `, null, { noNav: true, className: "auth-page-wrap" });
+  }
+
   function renderModal() {
     if (!modal) return "";
     if (modal.type === "company-switch") {
@@ -1165,7 +1210,8 @@
     histories: historiesPage,
     favorites: favoritesPage,
     chats: chatsPage,
-    files: filesPage
+    files: filesPage,
+    auth: authPage
   };
 
   function render() {
@@ -1420,11 +1466,45 @@
         localStorage.removeItem(STORAGE_KEY);
         state = freshState();
         modal = null;
-        currentRoute = "home";
+        currentRoute = "auth";
         navStack.length = 0;
         render();
         showToast("Demo 数据已重置", "success");
         break;
+      case "auth-tab":
+        state.authTab = target.dataset.value;
+        state.smsCountdown = 0;
+        clearInterval(smsTimer);
+        render();
+        break;
+      case "auth-skip":
+        state.authSkipped = true;
+        saveState();
+        go("home");
+        break;
+      case "send-sms": {
+        const phoneEl = document.getElementById("auth-phone");
+        const phone = (phoneEl?.value || "").trim();
+        if (!/^1\d{10}$/.test(phone)) { showToast("请输入正确的手机号"); break; }
+        state.smsCountdown = 60;
+        render();
+        showToast("验证码已发送（演示模式）", "success");
+        clearInterval(smsTimer);
+        smsTimer = setInterval(() => {
+          state.smsCountdown -= 1;
+          if (state.smsCountdown <= 0) { clearInterval(smsTimer); state.smsCountdown = 0; }
+          render();
+        }, 1000);
+        break;
+      }
+      case "logout":
+        state.auth = { isLoggedIn: false, phone: "", name: "" };
+        state.authTab = "login";
+        saveState();
+        go("auth");
+        showToast("已退出登录");
+        break;
+      /* eslint-disable-next-line no-fallthrough */
       default:
         break;
     }
@@ -1463,6 +1543,30 @@
       const value = input.value;
       input.value = "";
       sendChat(value);
+    } else if (form.id === "auth-form") {
+      const phone = (form.querySelector("#auth-phone")?.value || "").trim();
+      const password = (form.querySelector("#auth-password")?.value || "").trim();
+      if (state.authTab === "register") {
+        const smsCode = (form.querySelector("#auth-sms-code")?.value || "").trim();
+        if (!phone || !smsCode || !password) { showToast("请填写完整信息"); return; }
+        if (!/^1\d{10}$/.test(phone)) { showToast("请输入正确的手机号"); return; }
+        if (smsCode.length < 4) { showToast("请输入正确的验证码"); return; }
+        if (password.length < 6) { showToast("密码至少 6 位"); return; }
+        clearInterval(smsTimer);
+        state.smsCountdown = 0;
+        state.auth = { isLoggedIn: true, phone, name: phone.replace(/(\d{3})\d{4}(\d{4})/, "$1****$2") };
+        state.authTab = "login";
+        saveState();
+        showToast("注册成功", "success");
+        go("home");
+      } else {
+        if (!phone || !password) { showToast("请填写手机号和密码"); return; }
+        if (!/^1\d{10}$/.test(phone)) { showToast("请输入正确的手机号"); return; }
+        state.auth = { isLoggedIn: true, phone, name: phone.replace(/(\d{3})\d{4}(\d{4})/, "$1****$2") };
+        saveState();
+        showToast("登录成功", "success");
+        go("home");
+      }
     } else if (form.id === "add-company-form") {
       const data = new FormData(form);
       const name = String(data.get("companyName") || "").trim();

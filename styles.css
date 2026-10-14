@@ -2836,6 +2836,217 @@ svg {
   .bottom-nav, .sticky-cta, .status-bar, .page-head .icon-btn { display: none !important; }
 }
 
+/* ── 登录/注册 ── */
+.auth-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  padding: 40px 24px calc(30px + var(--safe-bottom));
+}
+
+.page.auth-page-wrap {
+  overflow: hidden;
+  background: url('./auth-bg.png') center top / cover no-repeat, #0b111e;
+}
+
+.auth-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 32px;
+  color: #fff;
+}
+
+.auth-brand-mark {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  border-radius: 18px;
+  color: #065de1;
+  background: #fff;
+  box-shadow: 0 10px 28px rgba(2, 24, 70, .22);
+  font-size: 28px;
+  font-weight: 900;
+}
+
+.auth-brand h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: .04em;
+}
+
+.auth-brand p {
+  margin: 0;
+  color: rgba(255,255,255,.68);
+  font-size: 12px;
+}
+
+.auth-card {
+  width: 100%;
+  padding: 24px 20px 22px;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 20px 50px rgba(0, 20, 60, .18);
+}
+
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 22px;
+  padding: 5px;
+  border-radius: 13px;
+  background: #edf2f9;
+}
+
+.auth-tab {
+  min-height: 38px;
+  border-radius: 10px;
+  color: #70809d;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 680;
+  transition: .16s ease;
+}
+
+.auth-tab.active {
+  color: var(--blue);
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(40, 69, 107, .08);
+}
+
+.auth-form {
+  display: grid;
+  gap: 14px;
+}
+
+.auth-input {
+  width: 100%;
+  min-height: 50px;
+  padding: 0 15px;
+  border: 1.5px solid #e0e8f3;
+  border-radius: 14px;
+  outline: 0;
+  color: var(--ink);
+  background: #f8fafc;
+  font-size: 14px;
+}
+
+.auth-input:focus {
+  border-color: var(--blue);
+  background: #fff;
+}
+
+.auth-input::placeholder {
+  color: #a0aec0;
+}
+
+.sms-row {
+  display: flex;
+  gap: 10px;
+}
+
+.sms-row .auth-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.sms-btn {
+  flex: 0 0 auto;
+  min-height: 50px;
+  padding: 0 14px;
+  border-radius: 14px;
+  color: var(--blue);
+  background: var(--blue-soft);
+  font-size: 12px;
+  font-weight: 680;
+  white-space: nowrap;
+  transition: .16s ease;
+}
+
+.sms-btn:active {
+  background: #d4e4fc;
+}
+
+.sms-btn.counting {
+  color: #8f9eb5;
+  background: #eef2f8;
+}
+
+.auth-submit {
+  width: 100%;
+  min-height: 50px;
+  margin-top: 4px;
+  border-radius: 15px;
+  color: #fff;
+  background: linear-gradient(135deg, #0875ff, #0652df);
+  box-shadow: 0 10px 22px rgba(8, 94, 232, .22);
+  font-size: 15px;
+  font-weight: 720;
+  transition: .16s ease;
+}
+
+.auth-submit:active {
+  transform: scale(.98);
+}
+
+.auth-footer {
+  margin-top: 18px;
+  color: #8f9eb5;
+  font-size: 10px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.auth-skip {
+  display: block;
+  margin-top: 20px;
+  color: rgba(255,255,255,.7);
+  background: none;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  width: 100%;
+}
+
+/* ── 个人主页登录入口 ── */
+.profile-auth-entry {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  margin: 0 18px;
+  border: 1px solid rgba(255,255,255,.28);
+  border-radius: 16px;
+  color: #fff;
+  background: rgba(255,255,255,.08);
+  font-size: 14px;
+  font-weight: 680;
+}
+
+.profile-auth-entry:active {
+  background: rgba(255,255,255,.15);
+}
+
+.profile-logout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  margin-top: 4px;
+  border-radius: 14px;
+  color: var(--muted);
+  background: transparent;
+  font-size: 12px;
+}
+
 /* V1.1 首页：按参考图重建的手机端信息架构 */
 .ref-home-page {
   background: #fff;

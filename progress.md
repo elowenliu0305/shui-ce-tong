@@ -1,7 +1,7 @@
 # 税策通 Demo 优化进度
 
 > 项目路径：`/Users/jyokann/Documents/ChatGPT/新悦杯/dist/`（index.html / styles.css / app.js + PNG 素材）
-> 最后更新：2026-10-13（政策红利匹配页 1:1、返回逻辑改导航历史栈、政策详情固定底栏、真实资料数据替换）
+> 最后更新：2026-10-14（登录注册页 + 个人页登录态）
 
 ## 当前架构
 - 纯 vanilla JS SPA，IIFE + 事件委托，无框架
@@ -38,9 +38,11 @@
 21. 返回交互改为**导航历史栈**（returnTo 传参方案已废弃——go() 会覆盖 routeParams，多级链路会丢来源）：`navigate(route, params, record)` 跳转前把当前页+参数压入 `navStack`；"back"= 弹栈返回；底部导航 ROOT_ROUTES（home/checkup/ai/profile）点击清空栈；analyzing 过渡页不入栈；问卷内返回上一题（第 1 题弹栈）；重置 Demo 清栈
 21a. ~~旧 returnTo 方案记录~~（已被 21 取代，勿参考）
 22. 政策详情页底栏固定：`.page.detail-scroll` flex column + `.detail-scroll-area`（唯一滚动区）+ `.detail-cta`（static 纯白底+顶部分隔线贴底），与报告页 `.report-scroll` 同模式
+23. 登录注册页：单页双 tab（登录/注册），手机号+密码登录，手机号+验证码+密码注册，60s 模拟短信倒计时，深色背景图 `auth-bg.png`；首次打开无登录态 → auth 页；跳过登录记录 `authSkipped` 持久化
+24. 个人页登录态改造：未登录时头像区显示默认灰色头像（内联 SVG）+「登录 / 注册」按钮；已登录显示脱敏手机号+头像；底部「退出登录」清除 auth 状态并回 auth 页；重置 Demo 数据后回 auth 页
 
 ## 待办 / 未完成
-（暂无；报告页已完成，见第 13 条）
+- auth 页背景图可能需要进一步 1:1 匹配设计稿
 
 ## 踩坑记录
 - flex 子项要滚动需 `min-height: 0`（纵向）/ `min-width: 0`（横向）
