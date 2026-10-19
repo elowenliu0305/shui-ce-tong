@@ -16,10 +16,16 @@
 - 移动端浏览器验收覆盖成功流程、失败不产出事实、确认删除、第二企业空历史以及切回原企业恢复历史。
 - OpenAPI YAML 已通过本机 YAML 解析。
 
-## 已写好、待真实 Supabase 环境执行
+## 真实 Supabase 云库验证（2026-10-19 补做）
 
-- `supabase/tests/050_enterprise_files_rls.sql`：23 项 pgTAP 断言，覆盖上传准备幂等、完成状态、跨账号/跨企业/current-enterprise 隔离、浏览器禁止直写、派生资产不可见、撤权立即隐藏及数据库级联删除。
-- `supabase/migrations/202610190050_enterprise_files.sql` 与 `202610190051_enterprise_files_security.sql` 的真实 PostgreSQL 迁移、私有 bucket 和 Storage policy 行为。
-- `enterprise-file-upload` 的真实签名上传/下载、Storage 对象核验，以及 `delete-enterprise-file` 对源对象和派生对象的物理清理。
+执行环境：云项目 `shui-ce-tong`（ref `mwrsvolgftqukomfnreg`，PostgreSQL 17），pgTAP 1.3.3，经 MCP 通道执行（本机无 Docker，改在云库验证）。
 
-当前主机没有 Docker，也没有配置生产 Supabase 测试项目，无法执行 `supabase db reset`、`supabase test db` 或真实 Storage/Edge 调用。上述项目完成前 T079 保持未完成，不将真实 Storage、数据库 RLS 或线上文件删除描述为已上线。
+- `supabase/migrations/202610190050/0051` 已在真实 PostgreSQL 应用：表、私有 bucket（`enterprise-files`，20MB 上限与 MIME 白名单）、Storage 策略（浏览器对 bucket 内对象 select/insert/update/delete 全部 `and false`）生效
+- `supabase/tests/050_enterprise_files_rls.sql`：**23/23 通过**——上传准备幂等、完成状态、跨账号/跨企业/current-enterprise 隔离、浏览器禁止直写（42501）、派生资产不可见、撤权立即隐藏、数据库级联删除
+- 测试在 begin/rollback 事务内执行，零夹具残留
+
+## 待补齐（需 service role + 已验证测试账号）
+
+- `enterprise-file-upload` 真实签名上传/下载与 Storage 对象 SHA-256 复核、`delete-enterprise-file` 对源对象和派生对象的物理清理（函数已部署，端到端调用待测试账号）
+
+数据库 RLS/Storage 策略/级联删除已在真实 PostgreSQL 验收通过；真实 Storage 对象生命周期补齐前不描述为已上线。

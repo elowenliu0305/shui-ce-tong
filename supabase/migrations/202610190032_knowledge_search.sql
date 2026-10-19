@@ -99,7 +99,7 @@ as $$
     ) as rank
     from eligible
     where p_query <> '' and (
-      title % p_query or coalesce(document_number, '') % p_query
+      extensions.similarity(title, p_query) > 0.3 or extensions.similarity(coalesce(document_number, ''), p_query) > 0.3
       or array_to_string(issuer, ' ') ilike '%' || p_query || '%'
     )
     limit 60
@@ -112,7 +112,7 @@ as $$
     limit 60
   ),
   semantic_rank as (
-    select e.id, row_number() over (order by ce.embedding <=> p_query_embedding) as rank
+    select e.id, row_number() over (order by extensions.l2_distance(ce.embedding, p_query_embedding)) as rank
     from eligible e
     join public.chunk_embeddings ce on ce.chunk_id = e.id
     join public.embedding_generations g on g.id = ce.generation_id and g.status = 'active'
@@ -134,7 +134,14 @@ as $$
   ),
   deduped as (
     select e.*, f.score,
-      row_number() over (partition by e.document_id order by f.score desc, e.ordinal) as document_rank
+      -- 发现模式下：已失效/废止版本与未核验版本参与召回但融合分减半，
+      -- 保证已核验且当前有效的版本优先（spec：过期/未核验政策必须降级为待确认）
+      (case when e.validity_status in ('superseded', 'revoked') or e.review_status = 'pending'
+            then f.score * 0.5 else f.score end) as effective_score,
+      row_number() over (partition by e.document_id order by
+        (case when e.validity_status in ('superseded', 'revoked') or e.review_status = 'pending'
+              then f.score * 0.5 else f.score end) desc,
+        e.ordinal) as document_rank
     from fused f join eligible e on e.id = f.id
   )
   select deduped.id, document_id, document_version_id, deduped.id, title, document_number, issuer,
@@ -142,7 +149,7 @@ as $$
     left(content, 360), score
   from deduped
   where document_rank <= 2
-  order by score desc, title, ordinal
+  order by effective_score desc, title, ordinal
   limit greatest(1, least(p_limit, 20));
 $$;
 

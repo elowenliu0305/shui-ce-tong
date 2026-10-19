@@ -40,23 +40,34 @@ enable_confirmations = true
 enabled = true
 file_size_limit = "64MiB"
 
+# 超时单位：秒。取值依据各函数内部已设置的最大依赖耗时之和：
+# agent-chat = 15s 检索 + 25s 模型（含一次重试）+ 持久化余量
+# enterprise-file-upload = 服务端下载 20MB 原文件复核 + SHA-256
+# delete-* = 递归 Storage 清点 + 级联删除
 [functions.complete-assessment]
 verify_jwt = true
+timeout = 30
 
 [functions.knowledge-search]
 verify_jwt = true
+timeout = 20
 
 [functions.knowledge-source-url]
 verify_jwt = true
+timeout = 15
 
 [functions.agent-chat]
 verify_jwt = true
+timeout = 90
 
 [functions.delete-enterprise]
 verify_jwt = true
+timeout = 90
 
 [functions.enterprise-file-upload]
 verify_jwt = true
+timeout = 60
 
 [functions.delete-enterprise-file]
 verify_jwt = true
+timeout = 60

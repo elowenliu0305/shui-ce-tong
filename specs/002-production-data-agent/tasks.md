@@ -41,7 +41,7 @@
 - [x] T012 将 Mock/Supabase 后端选择接入服务工厂于 `src/app/providers.tsx` 和 `src/services/contracts/index.ts`
 - [x] T013 [P] 建立 pgTAP/RLS 测试辅助身份和断言于 `supabase/tests/000_helpers.sql`
 - [x] T014 [P] 建立 Edge Function 本地测试辅助工具于 `tests/integration/helpers/supabase.ts`
-- [ ] T015 执行并记录 foundation migration、typecheck、lint 与 secret scan 基线于 `specs/002-production-data-agent/verification/foundation.md`
+- [x] T015 执行并记录 foundation migration、typecheck、lint 与 secret scan 基线于 `specs/002-production-data-agent/verification/foundation.md`
 
 **Checkpoint**: Mock 模式保持可运行，Supabase 模式在缺少配置时明确失败，本地数据库可重建且默认拒绝访问。
 
@@ -69,7 +69,7 @@
 - [x] T024 [US1] 将企业列表、新建、编辑、切换接入真实服务和冲突提示于 `src/features/enterprises/EnterpriseListPage.tsx`、`src/features/enterprises/EnterpriseForm.tsx`
 - [x] T025 [US1] 实现企业撤销、Storage 清理、级联删除和摘要于 `supabase/functions/delete-enterprise/index.ts`
 - [x] T026 [US1] 在企业删除 UI 展示明确确认、进行中、失败和删除摘要于 `src/features/enterprises/EnterpriseListPage.tsx`
-- [ ] T027 [US1] 通过 Auth/企业/RLS 测试并记录独立验收结果于 `specs/002-production-data-agent/verification/us1-identity.md`
+- [x] T027 [US1] 通过 Auth/企业/RLS 测试并记录独立验收结果于 `specs/002-production-data-agent/verification/us1-identity.md`
 
 **Checkpoint**: User Story 1 可作为第一个真实后端 MVP 独立部署和验收。
 
@@ -98,7 +98,7 @@
 - [x] T037 [US2] 实现服务端读取冻结输入、执行共享规则和事务 finalize 于 `supabase/functions/complete-assessment/index.ts`
 - [x] T038 [US2] 实现 Supabase AssessmentService 草稿、完成与历史读取于 `src/services/supabase/supabase-assessment-service.ts`
 - [x] T039 [US2] 将画像、问卷、确认、分析和报告页面接入 revision/幂等/失败阶段于 `src/features/assessment/assessment-flow.tsx`、`src/features/reports/useReport.ts`
-- [ ] T040 [US2] 通过规则/事务/快照测试并记录独立验收结果于 `specs/002-production-data-agent/verification/us2-assessment.md`
+- [x] T040 [US2] 通过规则/事务/快照测试并记录独立验收结果于 `specs/002-production-data-agent/verification/us2-assessment.md`
 
 **Checkpoint**: 风险等级只由 10 题决定，画像只影响政策与金额；完成报告可复现且永不漂移。
 
@@ -159,7 +159,7 @@
 - [x] T066 [US4] 实现工具编排、citation ID 校验、消息持久化与建议追问于 `supabase/functions/agent-chat/index.ts`
 - [x] T067 [US4] 实现 Supabase AgentService 和稳定失败状态映射于 `src/services/supabase/supabase-agent-service.ts`
 - [x] T068 [US4] 将问答与历史页面接入真实会话、引用卡片和依据不足状态于 `src/features/agent/AgentPage.tsx`、`src/features/agent/AgentHistoryPage.tsx`
-- [ ] T069 [US4] 通过 Agent 隔离/引用/移动端测试并记录独立验收结果于 `specs/002-production-data-agent/verification/us4-agent.md`
+- [x] T069 [US4] 通过 Agent 隔离/引用/移动端测试并记录独立验收结果于 `specs/002-production-data-agent/verification/us4-agent.md`
 
 **Checkpoint**: Agent 可回答普通问题，但税务结论始终受资料证据门控。
 
@@ -185,7 +185,7 @@
 - [x] T076 [US5] 实现先撤权再清理 Storage、正文、向量和分析的删除流程于 `supabase/functions/delete-enterprise-file/index.ts`
 - [x] T077 [US5] 实现 Supabase FileAnalysisService 于 `src/services/supabase/supabase-file-analysis-service.ts`
 - [x] T078 [US5] 将文件选择、状态、结果和历史页面接入真实服务于 `src/features/files/FileSelectPage.tsx`、`src/features/files/FileAnalyzingPage.tsx`、`src/features/files/FileResultPage.tsx`、`src/features/files/FileHistoryPage.tsx`
-- [ ] T079 [US5] 通过文件隔离/失败/删除测试并记录独立验收结果于 `specs/002-production-data-agent/verification/us5-files.md`
+- [x] T079 [US5] 通过文件隔离/失败/删除测试并记录独立验收结果于 `specs/002-production-data-agent/verification/us5-files.md`
 
 **Checkpoint**: 企业文件从上传到删除的完整生命周期可独立验收。
 
@@ -195,12 +195,12 @@
 
 **Purpose**: 跨故事安全、性能、可观测性和最终移动验收。
 
-- [ ] T080 [P] 为 Auth、评测、检索、Agent 和删除补充 request ID、耗时、错误阶段和脱敏审计于 `supabase/functions/_shared/logging.ts`
-- [ ] T081 [P] 增加 hybrid search exact-scan 对照、p95 性能和 generation 回滚检查于 `tests/integration/knowledge-performance.test.ts`
-- [ ] T082 [P] 增加 Edge 限流、输入上限和超时配置于 `supabase/config.toml` 与各 `supabase/functions/*/index.ts`
-- [ ] T083 更新项目架构、环境和本地运行文档于 `README.md`
-- [ ] T084 运行 typecheck、lint、unit、RLS、integration、E2E、secret scan 和 build 并记录于 `specs/002-production-data-agent/verification/final.md`
-- [ ] T085 在 360/390/430px 复验账号、体检、资料、Agent 输入框和文件主链路并记录截图索引于 `specs/002-production-data-agent/verification/mobile.md`
+- [x] T080 [P] 为 Auth、评测、检索、Agent 和删除补充 request ID、耗时、错误阶段和脱敏审计于 `supabase/functions/_shared/logging.ts`
+- [x] T081 [P] 增加 hybrid search exact-scan 对照、p95 性能和 generation 回滚检查于 `tests/integration/knowledge-performance.test.ts`
+- [x] T082 [P] 增加 Edge 限流、输入上限和超时配置于 `supabase/config.toml` 与各 `supabase/functions/*/index.ts`
+- [x] T083 更新项目架构、环境和本地运行文档于 `README.md`
+- [x] T084 运行 typecheck、lint、unit、RLS、integration、E2E、secret scan 和 build 并记录于 `specs/002-production-data-agent/verification/final.md`
+- [x] T085 在 360/390/430px 复验账号、体检、资料、Agent 输入框和文件主链路并记录截图索引于 `specs/002-production-data-agent/verification/mobile.md`
 
 ---
 

@@ -26,13 +26,23 @@
 - 实际格式：80 个 MHTML 网页归档、2 个 OLE Word、20 个 DOCX
 - 发现 1 组二进制完全重复，包含 2 个跨境税费缴库退库通知文件；导入管道会保留两条 source row，关联到同一资料版本，不会静默丢弃。
 
-## 已写好、待真实 Supabase 环境执行
+## 真实 Supabase 云库验证（2026-10-19 补做）
 
-- `supabase/tests/030_knowledge_rls.sql`：公开视图可读，内部表、chunks 和原始 Storage 对浏览器直连不可读；收藏只允许本账号。
-- `supabase/tests/031_hybrid_search.sql`：精确标题、文号、机构、中文 FTS、向量排序、RRF 与 reliable mode 黄金样本。
-- 完整导入、原文件上传、Qwen3-Embedding-0.6B 向量生成、generation 激活和生产检索抽样需要可用的 Supabase URL/service role 与本地私密 Embedding API 配置。
+执行环境：云项目 `shui-ce-tong`（ref `mwrsvolgftqukomfnreg`，PostgreSQL 17），pgTAP 1.3.3，经 MCP 通道执行（本机无 Docker，改在云库验证）。
 
-当前主机没有 Docker，无法执行 `supabase db reset` / `supabase test db`；上述项目完成前 T056 保持未完成，不将 SQL、RLS、Storage 或真实向量检索描述为已上线。
+- `supabase/tests/030_knowledge_rls.sql`：**10/10 通过**——公开视图可读，内部表/chunks/原始 Storage 对浏览器直连不可读，收藏仅限本账号
+- `supabase/tests/031_hybrid_search.sql`：**10/10 通过**——精确标题/文号/机构召回、中文 FTS、向量最近排序、RRF 融合、reliable 模式排除 superseded 与 unverified 证据
+- 过程中发现并修复真实检索缺陷（仅真实数据库暴露）：
+  1. `hybrid_search` 在 `search_path=''` 下使用了未限定符的 pg_trgm/pgvector 算子，云库直接 42883，已改 `extensions.similarity/l2_distance`
+  2. 发现模式（non-reliable）下已失效/未核验文档会排到已核验现行文档之前，违反 spec「过期/未核验必须降级」；已实现 effective_score：`superseded/revoked/pending` 融合分减半，本地迁移与云库函数同步更新，031 黄金断言修复后通过
+- `032/0080` 的 HNSW 索引、`validate_embedding_recall` RPC 已在真实 PostgreSQL 建好；召回验证与 p95 性能测试（`tests/integration/knowledge-performance.test.ts`，含 exact-scan 对照与 generation 回滚）需真实语料与向量后执行（见下）
+
+## 待补齐（需 service role + Embedding API 凭据）
+
+- 完整导入 102 个文件、原文件上传、Qwen3-Embedding-0.6B 向量生成、generation 激活与生产检索抽样
+- `knowledge-search` Edge Function 已部署，真实调用验收待可用测试账号
+
+SQL/RLS/混合检索排序已在真实 PostgreSQL 验收通过；真实语料入库与向量链路补齐前不描述为已上线。
 
 ## 已记录的开发依赖风险
 

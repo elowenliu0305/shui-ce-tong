@@ -16,10 +16,16 @@
 - 模型密钥只从 Edge 本地环境读取；模型客户端覆盖缺少配置、JSON 输出校验、20,000 字上限、超时和有界重试。
 - 移动端浏览器验收覆盖四类问答、税务引用打开、无依据降级、历史会话、创建第二企业、切换后隔离以及切回原企业恢复历史。
 
-## 已写好、待真实 Supabase 环境执行
+## 真实 Supabase 云库验证（2026-10-19 补做）
 
-- `supabase/tests/040_agent_rls.sql`：17 项 pgTAP 断言，覆盖账号隔离、当前企业隔离、切换后立即隐藏、浏览器禁止直写/改写消息、当前企业会话删除和幂等重放只产生一对消息。
-- `supabase/migrations/202610190040_agent_schema.sql` 与 `202610190041_agent_security.sql` 的真实 PostgreSQL 迁移、触发器和事务行为。
-- `supabase/functions/agent-chat/index.ts` 对真实 `knowledge-search`、私密模型 API 和数据库持久化的端到端调用。
+执行环境：云项目 `shui-ce-tong`（ref `mwrsvolgftqukomfnreg`，PostgreSQL 17），pgTAP 1.3.3，经 MCP 通道执行（本机无 Docker，改在云库验证）。
 
-当前主机没有 Docker，也没有配置生产 Supabase/模型私密凭据，无法执行 `supabase db reset`、`supabase test db` 或真实 Edge 调用。上述项目完成前 T069 保持未完成，不将数据库 RLS、真实模型或线上 Agent 描述为已上线。
+- `supabase/migrations/202610190040_agent_schema.sql` 与 `202610190041_agent_security.sql` 已在真实 PostgreSQL 上应用，触发器与事务行为生效
+- `supabase/tests/040_agent_rls.sql`：**18/18 通过**（原文件 plan 误写 17，已修正为 18）——账号隔离、当前企业隔离、企业切换后立即隐藏、浏览器禁止直写/改写消息（42501）、当前企业会话删除、幂等重放只产生一对消息
+- `agent-chat` Edge Function 已部署到云项目；对真实 `knowledge-search` 与私密模型 API 的端到端调用待可用测试账号 + 模型密钥后补做
+
+## 待补齐
+
+- `agent-chat` 真实模型端到端调用（需 `MODEL_API_KEY` 等 Edge secrets 与已验证测试账号，见 `final.md`）
+
+数据库 RLS 与幂等持久化已在真实 PostgreSQL 验收通过；真实模型链路补齐前不描述为已上线。

@@ -235,7 +235,7 @@ begin
   ), false) into v_answers_valid
   from jsonb_each_text(v_questionnaire.answers) answer;
 
-  if jsonb_object_length(v_questionnaire.answers) <> 10 or not v_answers_valid then
+  if coalesce((select count(*) from jsonb_object_keys(v_questionnaire.answers)), 0) <> 10 or not v_answers_valid then
     raise exception using errcode = '22023', message = 'questionnaire_incomplete';
   end if;
 

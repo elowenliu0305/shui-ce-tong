@@ -1,4 +1,4 @@
-import { logEvent } from "./logging.ts";
+import { errorStageOf, logEvent } from "./logging.ts";
 
 export type StableErrorCode =
   | "unauthorized"
@@ -31,7 +31,8 @@ function requestId(request: Request): string {
 
 function allowedOrigin(request: Request): string {
   const origin = request.headers.get("origin") ?? "";
-  const configured = Deno.env.get("ALLOWED_WEB_ORIGINS")?.split(",").map((item) => item.trim()) ?? [];
+  const runtime = globalThis as typeof globalThis & { Deno?: { env: { get(name: string): string | undefined } } };
+  const configured = runtime.Deno?.env.get("ALLOWED_WEB_ORIGINS")?.split(",").map((item) => item.trim()) ?? [];
   const local = /^http:\/\/(127\.0\.0\.1|localhost):\d+$/.test(origin);
   return local || configured.includes(origin) ? origin : "null";
 }
@@ -90,6 +91,7 @@ export async function handleRequest(
       path: new URL(request.url).pathname,
       status: known.status,
       code: known.code,
+      errorStage: errorStageOf(error),
       retryable: known.retryable,
       durationMs,
     });

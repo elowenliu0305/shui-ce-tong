@@ -19,10 +19,10 @@ begin
   end if;
   select coalesce(array_agg(chunk_id order by distance), '{}') into v_approx
   from (
-    select ce.chunk_id, ce.embedding <=> p_query_embedding as distance
+    select ce.chunk_id, extensions.l2_distance(ce.embedding, p_query_embedding) as distance
     from public.chunk_embeddings ce
     join public.embedding_generations g on g.id = ce.generation_id and g.status = 'active'
-    order by ce.embedding <=> p_query_embedding
+    order by extensions.l2_distance(ce.embedding, p_query_embedding)
     limit p_limit
   ) ranked;
 
@@ -30,10 +30,10 @@ begin
   perform set_config('enable_bitmapscan', 'off', true);
   select coalesce(array_agg(chunk_id order by distance), '{}') into v_exact
   from (
-    select ce.chunk_id, ce.embedding <=> p_query_embedding as distance
+    select ce.chunk_id, extensions.l2_distance(ce.embedding, p_query_embedding) as distance
     from public.chunk_embeddings ce
     join public.embedding_generations g on g.id = ce.generation_id and g.status = 'active'
-    order by ce.embedding <=> p_query_embedding
+    order by extensions.l2_distance(ce.embedding, p_query_embedding)
     limit p_limit
   ) ranked;
 
