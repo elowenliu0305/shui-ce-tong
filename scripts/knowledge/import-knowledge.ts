@@ -28,13 +28,6 @@ function sha256(value: string | Buffer): string {
   return createHash("sha256").update(value).digest("hex");
 }
 
-function storageName(value: string): string {
-  return [...value.normalize("NFC")]
-    .map((character) => character.charCodeAt(0) <= 31 || character === "/" || character === "\\" ? "_" : character)
-    .join("")
-    .slice(-180);
-}
-
 function parserManifest(parsed: ParsedSource) {
   return {
     status: parsed.status,
@@ -128,13 +121,13 @@ async function createDocumentVersion(client: SupabaseClient, source: RegisteredS
     document_number: parsed.metadata.documentNumber,
     issuer: parsed.metadata.issuer,
     published_on: parsed.metadata.publishedOn,
-    validity_status: "unknown",
+    validity_status: process.env.KNOWLEDGE_IMPORT_VALIDITY_STATUS ?? "unknown",
     summary: parsed.normalizedText?.slice(0, 280) ?? null,
     body_text: parsed.normalizedText,
     body_hash: parsed.normalizedTextSha256,
     metadata_hash: metadataHash,
     source_url: parsed.metadata.sourceUrl,
-    review_status: "pending",
+    review_status: process.env.KNOWLEDGE_IMPORT_REVIEW_STATUS ?? "pending",
     parser_manifest: parserManifest(parsed),
   }).select("id").single()), "创建不可变资料版本");
 
@@ -210,7 +203,10 @@ export async function importKnowledgeArchive(archivePath: string) {
       if (exact.error) throw new Error(`二进制重复检查失败: ${exact.error.message}`);
       if (exact.data) return await attachDuplicate(client, source, exact.data);
 
-      const storageKey = source.storageKey ?? `${batch.id}/${source.id}/${storageName(source.originalName)}`;
+      // Supabase Storage 要求 key 为纯 ASCII（服务端会 URL 解码路径，中文/percent-encoding 均被拒）。
+      // 对象名固定为 source；原始文件名存于 knowledge_source_objects.original_name，
+      // 下载时由 knowledge-source-url 签名 URL 的 download 参数还原。
+      const storageKey = source.storageKey ?? `${batch.id}/${source.id}/source`;
       if (!source.storageKey) {
         const uploaded = await client.storage.from("knowledge-raw").upload(storageKey, buffer, {
           contentType: source.detectedMime ?? "application/octet-stream",

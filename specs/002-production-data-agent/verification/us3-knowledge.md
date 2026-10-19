@@ -37,12 +37,24 @@
   2. 发现模式（non-reliable）下已失效/未核验文档会排到已核验现行文档之前，违反 spec「过期/未核验必须降级」；已实现 effective_score：`superseded/revoked/pending` 融合分减半，本地迁移与云库函数同步更新，031 黄金断言修复后通过
 - `032/0080` 的 HNSW 索引、`validate_embedding_recall` RPC 已在真实 PostgreSQL 建好；召回验证与 p95 性能测试（`tests/integration/knowledge-performance.test.ts`，含 exact-scan 对照与 generation 回滚）需真实语料与向量后执行（见下）
 
-## 待补齐（需 service role + Embedding API 凭据）
+## 真实语料全管线执行（2026-10-20 补做，T056 闭环）
 
-- 完整导入 102 个文件、原文件上传、Qwen3-Embedding-0.6B 向量生成、generation 激活与生产检索抽样
-- `knowledge-search` Edge Function 已部署，真实调用验收待可用测试账号
+凭据就绪后在云项目执行完整管线：
 
-SQL/RLS/混合检索排序已在真实 PostgreSQL 验收通过；真实语料入库与向量链路补齐前不描述为已上线。
+- **导入**：`资料(1).zip`（SHA-256 与 dry-run 记录一致）102/102 成功、0 失败；102 来源行、101 个当前版本（1 组二进制重复按设计关联同一版本）、656 个分块
+- **向量化**：qwen3.7-text-embedding（1024 维，OpenAI 兼容端点）656/656；generation `e67fdf77` 校验后原子激活
+- **生产检索抽样**（service role 直调 `hybrid_search`）：
+  - 精确标题「涉税专业服务管理办法」→ 正确命中《涉税专业服务管理办法（试行）》（总局令第58号）
+  - 中文词法「研发费用加计扣除」→ 命中相关税收优惠文件
+  - 混合（真实向量）「小微企业增值税减免」→ 增值税法、优惠政策衔接公告，语义合理
+  - reliable 模式 → 101 份资料经用户确认批量标记 verified + current 后返回 5 条合规结果
+- **性能/安全**：`tests/integration/knowledge-performance.test.ts` 真实语料下 **3/3 通过**（唯一 active generation、召回 ≥0.9、exact-scan 对照、p95 < 2s、generation 回滚路径）
+
+导入过程中发现并修复的 2 个真实环境缺陷：
+1. Supabase Storage 拒绝非 ASCII key（中文文件名，服务端会 URL 解码路径，percent-encoding 也无效）→ 对象名固定为 `{batchId}/{sourceId}/source`，原始文件名存库并经签名 URL `download` 参数还原
+2. schema 重建后 service_role 丢失表/视图默认授权（`permission denied for table/view`）→ 新增迁移 `202610200001/0002` 显式补齐，工程不再依赖环境默认值
+
+**结论**：SQL/RLS/混合检索/真实语料导入/向量链路/生产检索全部在真实环境验收通过，T056 闭环。
 
 ## 已记录的开发依赖风险
 

@@ -130,7 +130,7 @@
 - [X] T053 [US3] 实现带 reliable/discovery 模式的知识检索 Edge Function 于 `supabase/functions/knowledge-search/index.ts`
 - [X] T054 [US3] 实现 Supabase KnowledgeService、收藏和签名来源 URL 于 `src/services/supabase/supabase-knowledge-service.ts`
 - [X] T055 [US3] 将首页、资料列表、搜索和详情接入真实检索分页与状态于 `src/features/home/HomePage.tsx`、`src/features/knowledge/KnowledgePage.tsx`、`src/features/knowledge/SearchPage.tsx`、`src/features/knowledge/KnowledgeDetailPage.tsx`
-- [ ] T056 [US3] 对给定资料包执行 dry-run、导入对账和搜索抽样并记录于 `specs/002-production-data-agent/verification/us3-knowledge.md`
+- [x] T056 [US3] 对给定资料包执行 dry-run、导入对账和搜索抽样并记录于 `specs/002-production-data-agent/verification/us3-knowledge.md`
 
 **Checkpoint**: 资料库搜索可独立上线；每个展示结果都能回到版本与原始来源。
 
