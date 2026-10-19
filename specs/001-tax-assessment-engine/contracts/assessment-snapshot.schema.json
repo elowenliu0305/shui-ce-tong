@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shuicetong.local/schemas/assessment-snapshot-v2.json",
+  "title": "AssessmentSnapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "enterpriseId",
+    "status",
+    "createdAt",
+    "completedAt",
+    "asOfDate",
+    "engineVersion",
+    "ruleSetVersion",
+    "catalogVersion",
+    "profileSnapshot",
+    "riskAnswersSnapshot",
+    "result"
+  ],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "enterpriseId": { "type": "string", "minLength": 1 },
+    "status": { "const": "completed" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "completedAt": { "type": "string", "format": "date-time" },
+    "asOfDate": { "type": "string", "format": "date" },
+    "engineVersion": { "type": "string", "minLength": 1 },
+    "ruleSetVersion": { "type": "string", "minLength": 1 },
+    "catalogVersion": { "type": "string", "minLength": 1 },
+    "profileSnapshot": { "$ref": "company-profile.schema.json" },
+    "riskAnswersSnapshot": { "type": "object", "minProperties": 10 },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profileCompleteness",
+        "riskSummary",
+        "policyMatches",
+        "savingsEstimates",
+        "estimatedTotalSavingYuan",
+        "priorityActions",
+        "citations"
+      ],
+      "properties": {
+        "profileCompleteness": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "riskSummary": { "$ref": "#/$defs/riskSummary" },
+        "policyMatches": { "type": "array", "items": { "$ref": "#/$defs/policyMatch" } },
+        "savingsEstimates": { "type": "array", "items": { "$ref": "#/$defs/savingsEstimate" } },
+        "estimatedTotalSavingYuan": { "type": ["integer", "null"], "minimum": 0 },
+        "priorityActions": { "type": "array", "items": { "type": "object" } },
+        "citations": { "type": "array", "items": { "$ref": "#/$defs/citation" } }
+      }
+    }
+  },
+  "$defs": {
+    "riskSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["confirmedRiskCount", "pendingVerificationCount", "level", "healthPercent", "items", "pendingItems"],
+      "properties": {
+        "confirmedRiskCount": { "type": "integer", "minimum": 0, "maximum": 10 },
+        "pendingVerificationCount": { "type": "integer", "minimum": 0, "maximum": 10 },
+        "level": { "enum": ["low", "medium", "high"] },
+        "healthPercent": { "type": "integer", "minimum": 0, "maximum": 100, "multipleOf": 10 },
+        "items": { "type": "array", "items": { "$ref": "#/$defs/riskItem" } },
+        "pendingItems": { "type": "array", "items": { "$ref": "#/$defs/pendingItem" } }
+      }
+    },
+    "conditionEvaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["conditionId", "fieldPath", "operator", "expected", "actual", "result", "basisRefs"],
+      "properties": {
+        "conditionId": { "type": "string" },
+        "fieldPath": { "type": "string" },
+        "operator": { "type": "string" },
+        "expected": {},
+        "actual": {},
+        "result": { "enum": ["pass", "fail", "unknown"] },
+        "basisRefs": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "policyMatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policyVersionId", "status", "satisfied", "missing", "failed", "ruleId", "ruleVersion", "evaluatedAt"],
+      "properties": {
+        "policyVersionId": { "type": "string" },
+        "status": { "enum": ["eligible", "pending", "ineligible"] },
+        "satisfied": { "type": "array", "items": { "$ref": "#/$defs/conditionEvaluation" } },
+        "missing": { "type": "array", "items": { "$ref": "#/$defs/conditionEvaluation" } },
+        "failed": { "type": "array", "items": { "$ref": "#/$defs/conditionEvaluation" } },
+        "ruleId": { "type": "string" },
+        "ruleVersion": { "type": "string" },
+        "evaluatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "riskItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["questionId", "answerOptionId", "title", "reason", "impact", "action"],
+      "properties": {
+        "questionId": { "type": "string" },
+        "answerOptionId": { "type": "string" },
+        "title": { "type": "string" },
+        "reason": { "type": "string" },
+        "impact": { "type": "string" },
+        "action": { "type": "string" },
+        "basisRefs": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "pendingItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["questionId", "title", "requiredEvidence"],
+      "properties": {
+        "questionId": { "type": "string" },
+        "title": { "type": "string" },
+        "requiredEvidence": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "savingsEstimate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policyVersionId", "status", "formulaId", "formulaVersion", "amountYuan", "missingFieldPaths", "overlapGroup"],
+      "properties": {
+        "policyVersionId": { "type": "string" },
+        "status": { "enum": ["computed", "pending", "excluded"] },
+        "formulaId": { "type": ["string", "null"] },
+        "formulaVersion": { "type": ["string", "null"] },
+        "inputValues": { "type": "object" },
+        "amountYuan": { "type": ["integer", "null"], "minimum": 0 },
+        "missingFieldPaths": { "type": "array", "items": { "type": "string" } },
+        "overlapGroup": { "type": ["string", "null"] }
+      }
+    },
+    "citation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["documentId", "sourceId", "title", "docNo", "locator"],
+      "properties": {
+        "documentId": { "type": "string" },
+        "sourceId": { "type": "string" },
+        "title": { "type": "string" },
+        "docNo": { "type": ["string", "null"] },
+        "locator": { "type": "string" },
+        "excerpt": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

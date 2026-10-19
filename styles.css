@@ -696,6 +696,7 @@ svg {
 .tag.green { color: #087c5e; background: #e8f8f2; }
 .tag.orange { color: #a45b04; background: #fff2df; }
 .tag.red { color: #b64139; background: #ffeded; }
+.tag.blue { color: #075bc7; background: #e9f3ff; }
 .tag.gray { color: #5e708b; background: #edf1f6; }
 
 .news-visual {
@@ -1235,6 +1236,7 @@ svg {
 .metric span { color: var(--muted); font-size: 10px; }
 .metric.green b { color: var(--green); }
 .metric.orange b { color: var(--orange); }
+.metric.red b { color: var(--red); }
 .metric.blue b { color: var(--blue); }
 
 .intro-visual {
@@ -2729,7 +2731,8 @@ svg {
 .form-group { margin-top: 15px; }
 .form-group label { display: block; margin-bottom: 7px; color: var(--ink-2); font-size: 12px; font-weight: 680; }
 .form-group input,
-.form-group textarea {
+.form-group textarea,
+.form-group select {
   width: 100%;
   min-height: 48px;
   padding: 12px 14px;
@@ -2739,6 +2742,49 @@ svg {
   color: var(--ink);
   background: #f8fafc;
 }
+
+.enterprise-profile {
+  display: grid;
+  gap: 14px;
+  padding: 12px 18px 34px;
+}
+
+.profile-form-card {
+  padding: 18px;
+}
+
+.profile-step {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding-bottom: 3px;
+}
+
+.profile-step > span {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 10px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--blue), #4c9dff);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.profile-step b,
+.profile-step small { display: block; }
+.profile-step b { color: var(--ink); font-size: 14px; }
+.profile-step small { margin-top: 2px; color: var(--muted); font-size: 10px; }
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.profile-grid .form-group { min-width: 0; }
+.profile-next { margin-top: 2px; }
 
 .task-options {
   display: grid;
@@ -2816,6 +2862,52 @@ svg {
 
 @media (min-width: 760px) {
   .bottom-nav { border-radius: 0 0 44px 44px; }
+}
+
+@media (max-width: 759px) {
+  html,
+  body,
+  #app {
+    width: 100%;
+    min-height: 100%;
+  }
+
+  html,
+  body {
+    overflow-x: hidden;
+    background: #fff;
+  }
+
+  body {
+    display: block;
+    min-height: 100dvh;
+    padding: 0;
+  }
+
+  #app,
+  .phone-frame,
+  .phone-screen,
+  .app-shell {
+    min-height: 100dvh;
+  }
+
+  .phone-frame {
+    width: 100%;
+    height: 100dvh;
+    padding: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .phone-frame::before,
+  .phone-frame::after {
+    display: none;
+  }
+
+  .phone-screen {
+    border-radius: 0;
+  }
 }
 
 @media (max-width: 360px) {
@@ -2993,6 +3085,27 @@ svg {
 
 .auth-submit:active {
   transform: scale(.98);
+}
+
+.auth-forgot {
+  display: block;
+  min-height: 40px;
+  margin: 7px auto 0;
+  color: var(--blue);
+  background: transparent;
+  font-size: 12px;
+  font-weight: 680;
+}
+
+.demo-account {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  color: #58708f;
+  background: #f3f7fc;
+  font-size: 10px;
+  line-height: 1.55;
+  text-align: center;
 }
 
 .auth-footer {
@@ -3215,6 +3328,77 @@ svg {
 .ref-cap.cap-two { top: 54px; left: 2px; }
 .ref-cap.cap-three { top: 86px; left: 18px; }
 
+.ref-company-context {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  min-height: 64px;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 10px 11px;
+  border: 1px solid rgba(145, 202, 255, .23);
+  border-radius: 17px;
+  background: rgba(4, 40, 86, .72);
+  box-shadow: inset 0 0 20px rgba(45, 134, 225, .08);
+  backdrop-filter: blur(8px);
+}
+
+.ref-company-icon {
+  display: grid;
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 12px;
+  color: #fff;
+  background: linear-gradient(145deg, #38a8ff, #1269df);
+  box-shadow: 0 8px 18px rgba(0, 22, 59, .26);
+}
+
+.ref-company-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.ref-company-copy small,
+.ref-company-copy strong,
+.ref-company-copy em {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ref-company-copy small {
+  color: #a9ccef;
+  font-size: 9px;
+}
+
+.ref-company-copy strong {
+  margin-top: 2px;
+  color: #fff;
+  font-size: 13px;
+}
+
+.ref-company-copy em {
+  margin-top: 3px;
+  color: #b8d3ee;
+  font-size: 9px;
+  font-style: normal;
+}
+
+.ref-company-context > button {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 2px;
+  padding: 0 4px 0 8px;
+  color: #d6eaff;
+  background: transparent;
+  font-size: 11px;
+}
+
 .ref-search {
   position: relative;
   z-index: 5;
@@ -3287,6 +3471,7 @@ svg {
 
 .ref-hot-row button {
   flex: 0 0 auto;
+  min-height: 44px;
   padding: 8px 11px;
   border-radius: 999px;
   color: #cfe7ff;

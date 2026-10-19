@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shuicetong.local/schemas/frontend-mock-envelope-v2.json",
+  "title": "FrontendMockEnvelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "revision",
+    "updatedAt",
+    "session",
+    "activeEnterpriseId",
+    "enterprisesById",
+    "profileDraftsByEnterpriseId",
+    "riskDraftsByEnterpriseId",
+    "assessmentRunsById",
+    "reportSnapshotsById",
+    "favoritesById",
+    "agentConversationsById",
+    "fileAnalysisRecordsById",
+    "preferences"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 2 },
+    "revision": { "type": "integer", "minimum": 0 },
+    "updatedAt": { "type": "string", "format": "date-time" },
+    "session": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/session" }] },
+    "activeEnterpriseId": { "type": ["string", "null"] },
+    "enterprisesById": { "type": "object", "additionalProperties": { "$ref": "#/$defs/enterprise" } },
+    "profileDraftsByEnterpriseId": { "type": "object", "additionalProperties": { "$ref": "company-profile.schema.json" } },
+    "riskDraftsByEnterpriseId": { "type": "object", "additionalProperties": { "type": "object" } },
+    "assessmentRunsById": { "type": "object", "additionalProperties": { "$ref": "assessment-snapshot.schema.json" } },
+    "reportSnapshotsById": { "type": "object", "additionalProperties": { "type": "object" } },
+    "favoritesById": { "type": "object", "additionalProperties": { "$ref": "#/$defs/favorite" } },
+    "agentConversationsById": { "type": "object", "additionalProperties": { "$ref": "#/$defs/conversation" } },
+    "fileAnalysisRecordsById": { "type": "object", "additionalProperties": { "$ref": "#/$defs/fileRecord" } },
+    "preferences": { "type": "object" }
+  },
+  "$defs": {
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["accountId", "emailMasked", "emailVerified", "expiresAt"],
+      "properties": {
+        "accountId": { "type": "string" },
+        "emailMasked": { "type": "string" },
+        "emailVerified": { "type": "boolean" },
+        "expiresAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "enterprise": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "accountId", "name", "regionProvince", "regionCity", "industry", "createdAt", "updatedAt"],
+      "properties": {
+        "id": { "type": "string" },
+        "accountId": { "type": "string" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "regionProvince": { "type": "string", "minLength": 1 },
+        "regionCity": { "type": "string", "minLength": 1 },
+        "industry": { "type": "string", "minLength": 1 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "favorite": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "accountId", "targetType", "targetId", "createdAt"],
+      "properties": {
+        "id": { "type": "string" },
+        "accountId": { "type": "string" },
+        "targetType": { "enum": ["policy", "news", "case", "other"] },
+        "targetId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "conversation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "enterpriseId", "title", "messages", "createdAt", "updatedAt"],
+      "properties": {
+        "id": { "type": "string" },
+        "enterpriseId": { "type": "string" },
+        "reportSnapshotId": { "type": ["string", "null"] },
+        "knowledgeDocumentId": { "type": ["string", "null"] },
+        "title": { "type": "string" },
+        "messages": { "type": "array", "items": { "type": "object" } },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "fileRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "enterpriseId", "displayName", "mediaType", "byteSize", "selectedTask", "status", "createdAt", "contentRead"],
+      "properties": {
+        "id": { "type": "string" },
+        "enterpriseId": { "type": "string" },
+        "displayName": { "type": "string" },
+        "mediaType": { "type": "string" },
+        "byteSize": { "type": "integer", "minimum": 0 },
+        "selectedTask": { "type": ["string", "null"] },
+        "status": { "enum": ["selected", "task-selected", "demo-analyzing", "demo-completed", "failed"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "contentRead": { "const": false }
+      }
+    }
+  }
+}

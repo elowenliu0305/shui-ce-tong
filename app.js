@@ -1,8 +1,8 @@
 (() => {
   "use strict";
 
-  const APP_DATE = "2026.10.11";
-  const STORAGE_KEY = "shuicetong-demo-v1";
+  const APP_DATE = "2026.10.15";
+  const STORAGE_KEY = "shuicetong-demo-v2";
   const root = document.getElementById("app");
 
   const iconPaths = {
@@ -96,8 +96,8 @@
         <rect x="88" y="2" width="62" height="32" rx="9" fill="#fff"/>
         <polygon points="114,33.5 126,33.5 122,44" fill="#fff"/>
       </g>
-      <text x="119" y="15" text-anchor="middle" font-size="8" fill="#8296b0" font-family="-apple-system,'PingFang SC',sans-serif">最高可节税</text>
-      <text x="119" y="29" text-anchor="middle" font-size="12.5" font-weight="700" fill="#0b57c9" font-family="-apple-system,'PingFang SC',sans-serif">14.2 万元</text>
+      <text x="119" y="15" text-anchor="middle" font-size="8" fill="#8296b0" font-family="-apple-system,'PingFang SC',sans-serif">节税测算</text>
+      <text x="119" y="29" text-anchor="middle" font-size="12.5" font-weight="700" fill="#0b57c9" font-family="-apple-system,'PingFang SC',sans-serif">待补数据</text>
       <circle cx="122" cy="44" r="5.5" fill="#fff" stroke="#2f86ff" stroke-width="3"/>
     </svg>`;
   }
@@ -110,6 +110,11 @@
       region: "浙江省杭州市",
       industry: "软件和信息技术服务业",
       taxpayer: "一般纳税人",
+      dataYear: "2025",
+      revenue: "6800000",
+      employees: "32",
+      rdInvestment: "860000",
+      hasRd: "是",
       status: "画像完整度 88%"
     },
     {
@@ -119,6 +124,11 @@
       region: "浙江省杭州市",
       industry: "文化创意与传媒",
       taxpayer: "小规模纳税人",
+      dataYear: "2025",
+      revenue: "",
+      employees: "8",
+      rdInvestment: "",
+      hasRd: "不清楚",
       status: "待完成首次体检"
     }
   ];
@@ -141,14 +151,14 @@
       chatMessages: [
         {
           role: "assistant",
-          html: "你好，我是税策通 AI 助手。我会结合<strong>权威政策依据</strong>和你选择的企业上下文，帮你解释适用条件、准备材料与潜在风险。"
+          html: "你好，我是税策通 AI Agent。税务与政策问题我会先检索依据并附来源；其他经营问题也可以问我，我会优先从小微企业的现金流、融资、成本和经营视角协助你。"
         }
       ],
       files: [
-        { name: "研发费用辅助账_2025.xlsx", type: "财务资料", date: "2026.10.02", status: "已完成归集检查" },
-        { name: "增值税申报表_9月.pdf", type: "申报表", date: "2026.10.01", status: "已完成异常检查" }
+        { name: "研发费用辅助账_2025.xlsx", type: "财务资料", date: "2026.10.02", status: "演示记录 · 未读取真实内容" },
+        { name: "增值税申报表_9月.pdf", type: "申报表", date: "2026.10.01", status: "演示记录 · 未读取真实内容" }
       ],
-      auth: { isLoggedIn: false, phone: "", name: "" },
+      auth: { isLoggedIn: false, name: "", emailVerified: false },
       authSkipped: false,
       authTab: "login",
       smsCountdown: 0
@@ -158,7 +168,24 @@
   function loadState() {
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-      return saved ? { ...freshState(), ...saved, aiBusy: false } : freshState();
+      if (!saved) return freshState();
+      const nextState = { ...freshState(), ...saved, aiBusy: false };
+      // 兼容旧版 Demo 数据，但不再持久化完整手机号。
+      nextState.auth = {
+        isLoggedIn: Boolean(saved.auth?.isLoggedIn),
+        name: saved.auth?.name || (saved.auth?.phone ? saved.auth.phone.replace(/(\d{3})\d{4}(\d{4})/, "$1****$2") : ""),
+        emailVerified: Boolean(saved.auth?.emailVerified || saved.auth?.isLoggedIn)
+      };
+      nextState.files = (nextState.files || []).map((file) => ({
+        ...file,
+        status: ["已完成归集检查", "已完成异常检查"].includes(file.status)
+          ? "演示记录 · 未读取真实内容"
+          : file.status
+      }));
+      if (saved.auth && Object.prototype.hasOwnProperty.call(saved.auth, "phone")) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(nextState));
+      }
+      return nextState;
     } catch {
       return freshState();
     }
@@ -170,7 +197,6 @@
   let modal = null;
   let toastTimer = null;
   let analysisTimer = null;
-let smsTimer = null;
 
   const questions = [
     {
@@ -239,54 +265,54 @@ let smsTimer = null;
     "software-list": {
       id: "software-list",
       title: "享受税收优惠政策的软件企业清单（2026）",
-      match: "高匹配",
+      match: "符合条件",
       matchClass: "green",
       source: "国家发展改革委、工业和信息化部、财政部、海关总署、税务总局",
       doc: "发改高技〔2026〕487 号《关于做好 2026 年享受税收优惠政策的集成电路企业或项目、软件企业清单制定工作的通知》",
       docNo: "发改高技〔2026〕487 号",
       docTitle: "关于做好 2026 年享受税收优惠政策的集成电路企业或项目、软件企业清单制定工作的通知",
       pubDate: "2026-04-07",
-      savingShort: "2.8 – 4.6 万元/年",
+      savingShort: "待补数据测算",
       valid: "现行有效 · 成文 2026.04.07",
-      saving: "入清单后享受企业所得税等优惠（估算 2.8–4.6 万元/年）",
+      saving: "需补充企业所得税、软件业务收入等数据后测算",
       summary: "列入国家鼓励的重点软件企业清单的，可享受企业所得税等优惠政策。2025 年已入清单的企业，2026 年需重新申报（申请窗口 4 月 7 日至 4 月 19 日）；符合条件可在所得税预缴时先行享受，年度汇算清缴时如未列入清单，按规定补缴税款、不加收滞纳金。",
-      satisfied: ["行业为软件和信息技术服务业", "有自行开发的软件产品并持续研发投入", "按规定建账并能提供经审计的会计报告"],
-      pending: ["是否达到重点鼓励类软件企业评价条件", "软件产品收入占比是否满足口径"],
+      satisfied: ["当前企业档案行业为软件和信息技术服务业"],
+      pending: ["是否有自行开发的软件产品并持续研发投入", "是否达到重点鼓励类软件企业评价条件", "软件产品收入占比是否满足口径", "建账与审计材料是否满足要求"],
       tags: ["软件企业", "企业所得税", "清单管理"]
     },
     "vat-newlaw": {
       id: "vat-newlaw",
       title: "增值税法施行后优惠政策衔接（2026 年第 10 号公告）",
-      match: "高匹配",
-      matchClass: "green",
+      match: "待补资料",
+      matchClass: "orange",
       source: "财政部、国家税务总局",
       doc: "财政部 税务总局公告 2026 年第 10 号《关于增值税法施行后增值税优惠政策衔接事项的公告》",
       docNo: "财政部 税务总局公告 2026 年第 10 号",
       docTitle: "关于增值税法施行后增值税优惠政策衔接事项的公告",
-      pubDate: "2026-10-08",
-      savingShort: "0.6 – 1.2 万元/年",
+      pubDate: "2026-01-30",
+      savingShort: "待补数据测算",
       valid: "现行有效 · 2026.01.01 起施行",
-      saving: "0.6–1.2 万元/年（进项与优惠口径复核）",
+      saving: "需结合具体业务、优惠项目与申报数据后测算",
       summary: "《中华人民共和国增值税法》及实施条例于 2026 年 1 月 1 日正式施行，第 10 号公告明确起征点（月销售额 10 万元、季度 30 万元）和免征增值税项目等衔接安排。企业需按新法口径复核纳税人身份、适用税率与已享优惠是否延续。",
-      satisfied: ["增值税一般纳税人，按月正常申报", "经营范围不涉及新增免税项目"],
-      pending: ["2026 年度新增/调整优惠事项的衔接口径确认", "开票与台账在新口径下的一致性核对"],
+      satisfied: ["当前企业档案标记为增值税一般纳税人"],
+      pending: ["当前申报周期与实际申报状态", "经营范围是否涉及免税项目", "2026 年度新增或调整优惠事项的衔接口径", "开票与台账在新口径下的一致性"],
       tags: ["增值税", "新法施行", "政策衔接"]
     },
     "cross-region": {
       id: "cross-region",
       title: "跨区域涉税事项报验管理",
-      match: "待补信息",
+      match: "待补资料",
       matchClass: "orange",
       source: "国家税务总局",
       doc: "《关于明确跨区域涉税事项报验管理相关问题的公告》及官方解读",
-      docNo: "国家税务总局公告",
+      docNo: "国家税务总局公告 2018 年第 38 号",
       docTitle: "关于明确跨区域涉税事项报验管理相关问题的公告",
       pubDate: "2018-07-04",
       savingShort: "待测算",
       valid: "现行有效 · 地方办理口径需确认",
       saving: "避免逾期申报与监管风险（不直接节税）",
       summary: "企业在注册地以外开展生产经营（建筑作业、跨区域提供服务等）的，需按规定向经营地税务机关进行涉税事项报验，并在经营结束后办理税款申报与结清。公司若购销或服务集中在外地，建议先确认是否属于报验管理范围。",
-      satisfied: ["电子税务局账户可用，具备跨区域业务办理条件"],
+      satisfied: [],
       pending: ["实际经营地与跨区业务持续时间", "是否存在需报验的具体项目"],
       tags: ["跨区经营", "报验管理", "资料待补"]
     }
@@ -298,22 +324,22 @@ let smsTimer = null;
       title: "研发费用归集凭证不完整",
       level: "中风险",
       levelClass: "orange",
-      sourceType: "基于已上传的《研发费用辅助账_2025.xlsx》样例核验",
-      reason: "材料领用记录中有 3 笔费用缺少研发项目编号，部分工时记录仅按部门归集。",
-      impact: "可能影响研发费用加计扣除的可归集金额，后续核查时需要补充证明。",
-      advice: "先补齐项目编号与领料单，再按研发项目重新核对人员工时和材料消耗。",
-      evidence: ["3 笔材料费用未关联研发项目", "2 名研发人员 9 月工时记录缺失", "辅助账与总账差异 8,420 元"]
+      sourceType: "演示规则提醒（尚未读取文件内容）",
+      reason: "当前仅根据企业所属行业展示研发费用归集的常见复核项，尚未对真实辅助账或凭证进行核验。",
+      impact: "如项目、人员工时与材料领用证据不完整，可能影响研发费用加计扣除的可归集金额。",
+      advice: "上传并确认允许解析的辅助账后，再核对项目编号、人员工时、材料领用和总账差异。",
+      evidence: ["待核验：研发项目与费用项目的对应关系", "待核验：研发人员工时记录", "待核验：辅助账与总账勾稽关系"]
     },
     "invoice-gap": {
       id: "invoice-gap",
       title: "开票与收入确认存在时间差",
       level: "低风险",
       levelClass: "blue",
-      sourceType: "基于企业画像与 9 月增值税申报表的规则提醒",
-      reason: "9 月部分已开票项目尚未在同期间的收入台账中确认，存在跨期情形。",
+      sourceType: "演示规则提醒（尚未读取申报表）",
+      reason: "当前展示开票与收入确认时间差的通用风险场景，尚未核对企业真实申报表和收入台账。",
       impact: "可能造成增值税与企业所得税口径暂时不一致，需要留存合理说明。",
       advice: "核对履约进度与收入确认政策，为跨期项目保留合同、验收单和对账记录。",
-      evidence: ["开票金额与收入台账差异 26,000 元", "涉及 1 个跨月实施项目"]
+      evidence: ["待核验：开票明细与收入台账期间", "待核验：跨期项目合同、验收与履约进度"]
     }
   };
 
@@ -325,10 +351,10 @@ let smsTimer = null;
       summary: "主播 2021–2023 年通过私人账户收款隐匿收入、转换收入性质等方式，少缴个人所得税、增值税等税费 313.45 万元，被追缴税费、加收滞纳金并处罚款共计 631.96 万元，款项已全部入库。",
       tags: ["网络直播", "私户收款", "隐匿收入"],
       result: "涉案税费款、滞纳金及罚款全部追缴入库；经营收入须通过对公账户结算，按期如实申报全部收入。",
-      background: "当事人在网络平台从事直播带货经营活动，注册为个体工商户（小规模纳税人），实际经营规模已接近甚至超过一般纳税人标准。",
-      problems: ["直播经营收入通过私人银行账户收取，长期不入账", "人为转换收入性质，少缴增值税与个人所得税", "疑似违规保留小规模纳税人身份适用低征收率"],
+      background: "当事人在网络平台从事直播带货经营活动，登记为小规模纳税人。",
+      problems: ["直播经营收入通过私人银行账户收取并隐匿收入", "通过转换收入性质等方式少缴个人所得税、增值税等税费"],
       handling: ["税务机关依托税收大数据分析线索立案，逐笔核对私户流水", "2025 年 12 月作出处理决定：少缴税费 313.45 万元，追缴及罚款合计 631.96 万元", "全部款项追缴入库，并对当事人提示规范资金收款渠道"],
-      related: { policyId: "vat-newlaw", note: "增值税法 2026 年施行后，违规维持小规模身份的追溯补税成本显著提高" }
+      related: { doc: "《中华人民共和国税收征收管理法》及相关税收法律法规" }
     },
     {
       id: "case-dereg",
@@ -364,6 +390,52 @@ let smsTimer = null;
 
   function currentCompany() {
     return state.companies.find((company) => company.id === state.currentCompany) || state.companies[0];
+  }
+
+  function isUnknownAnswer(answer = "") {
+    return answer.includes("不清楚") || answer.includes("未查询");
+  }
+
+  function assessmentSummary() {
+    const answers = questions.map((question) => state.assessmentAnswers[question.key]).filter(Boolean);
+    const pendingCount = answers.filter(isUnknownAnswer).length;
+    const riskCount = questions.reduce((total, question) => {
+      const answer = state.assessmentAnswers[question.key];
+      if (!answer || isUnknownAnswer(answer)) return total;
+      return total + (question.options.indexOf(answer) > 0 ? 1 : 0);
+    }, 0);
+    const health = (10 - riskCount) * 10;
+    const level = riskCount <= 2 ? "低" : riskCount <= 5 ? "中" : "高";
+    const tone = level === "低" ? "green" : level === "中" ? "orange" : "red";
+    return {
+      answeredCount: answers.length,
+      pendingCount,
+      riskCount,
+      health,
+      level,
+      tone,
+      findings: questions.filter((question) => {
+        const answer = state.assessmentAnswers[question.key];
+        return answer && !isUnknownAnswer(answer) && question.options.indexOf(answer) > 0;
+      })
+    };
+  }
+
+  function resolvePolicy(policy) {
+    if (policy.id !== "software-list") return policy;
+    const company = currentCompany();
+    const eligible = company.industry.includes("软件") && company.hasRd === "是" && Boolean(company.rdInvestment);
+    return {
+      ...policy,
+      match: eligible ? "符合条件" : "待补资料",
+      matchClass: eligible ? "green" : "orange",
+      satisfied: eligible
+        ? ["所属行业为软件和信息技术服务业", "已确认开展研发活动", `已填写研发投入 ${Number(company.rdInvestment).toLocaleString("zh-CN")} 元`]
+        : [company.industry ? `已填写行业：${company.industry}` : ""].filter(Boolean),
+      pending: eligible
+        ? ["是否达到重点鼓励类软件企业评价条件", "软件产品收入占比是否满足口径", "建账与审计材料是否满足要求"]
+        : ["是否属于软件企业", "是否开展研发活动及研发投入金额", "软件产品收入占比是否满足口径"]
+    };
   }
 
   function statusBar(light = false) {
@@ -440,6 +512,7 @@ let smsTimer = null;
   }
 
   function homePage() {
+    const company = currentCompany();
     const services = [
       { title: "AI税务体检", sub: "全面诊断风险", icon: "shield", tone: "blue", attrs: 'data-route="checkup"' },
       { title: "政策匹配", sub: "精准解读适用", icon: "search", tone: "yellow", attrs: 'data-route="opportunities"' },
@@ -448,10 +521,10 @@ let smsTimer = null;
       { title: "税务画像", sub: "企业税务全景", icon: "building", tone: "green", attrs: 'data-route="companies"' },
       { title: "体检报告", sub: "生成专业报告", icon: "report", tone: "purple", attrs: 'data-route="report"' },
       { title: "文件解析", sub: "支持图片/文档", icon: "file", tone: "cyan", attrs: 'data-action="choose-file"' },
-      { title: "更多服务", sub: "企业全场景", icon: "more", tone: "silver", attrs: '' }
+      { title: "更多服务", sub: "企业全场景", icon: "more", tone: "silver", attrs: 'data-action="more-services"' }
     ];
     const homeNews = [
-      { title: "增值税法 1 月 1 日起施行，10 号公告明确优惠衔接", summary: "财政部、税务总局明确起征点（月 10 万/季 30 万）与免征增值税项目衔接安排，企业应复核纳税人身份与已享优惠口径…", tags: ["增值税新法", "政策衔接", "快讯"], date: "2026-10-10", tone: "coins", icon: "tax", route: "policy", id: "vat-newlaw" },
+      { title: "增值税法 1 月 1 日起施行，10 号公告明确优惠衔接", summary: "财政部、税务总局明确起征点（月 10 万/季 30 万）与免征增值税项目衔接安排，企业应复核纳税人身份与已享优惠口径…", tags: ["增值税新法", "政策衔接", "快讯"], date: "2026-01-30", tone: "coins", icon: "tax", route: "policy", id: "vat-newlaw" },
       { title: "7 起网红网店偷税案件集中曝光，平台经营者应诚信纳税", summary: "私户收款隐匿收入、转换收入性质，追缴税费、滞纳金并处罚款全部入库。网络并非法外之地，经营收入须对公结算…", tags: ["稽查曝光", "平台经济", "合规提醒"], date: "2026-07-10", tone: "shield", icon: "shield", route: "case", id: "case-anchor" },
       { title: "专家解读：“逃逸式”注销不能逃避税收责任", summary: "注销不消除存续期间纳税义务，欺诈注销可被撤销登记并追征税款，偷税追征不受期限限制，个体户实控人承担连带责任…", tags: ["注销风险", "专家解读", "征管法"], date: "2026-07-10", tone: "desk", icon: "building", route: "case", id: "case-dereg" },
       { title: "2026 年软件企业税收优惠清单申报启动，已入清单需重新申报", summary: "发改高技〔2026〕487 号明确 2025 年已列入清单的企业 2026 年需重新申报，申请窗口 4 月 7 日至 19 日，预缴可先行享受…", tags: ["软件企业", "清单管理", "所得税优惠"], date: "2026-04-07", tone: "chart", icon: "report", route: "policy", id: "software-list" }
@@ -488,6 +561,11 @@ let smsTimer = null;
             </svg>
           </div>
         </div>
+        <div class="ref-company-context">
+          <span class="ref-company-icon">${icon("building", 20)}</span>
+          <span class="ref-company-copy"><small>当前企业</small><strong>${escapeHtml(company.name)}</strong><em>${escapeHtml(company.region)} · ${escapeHtml(company.taxpayer)}</em></span>
+          <button type="button" data-action="company-switch">切换 ${icon("chevron", 15)}</button>
+        </div>
         <form class="ref-search" id="home-search-form">
           <label>
             ${icon("search", 24)}
@@ -513,6 +591,7 @@ let smsTimer = null;
 
   function checkupPage() {
     const company = currentCompany();
+    const result = assessmentSummary();
     if (state.assessmentCompleted) {
       return layout(`
         <section class="checkup-full-hero">
@@ -524,7 +603,7 @@ let smsTimer = null;
           <div class="checkup-hero-content">
             <div class="checkup-status">${icon("check", 14)} 本次体检已完成</div>
             <h2>机会看得见，风险早一步</h2>
-            <p>已基于 10 项企业画像、3 类政策规则与 2 份演示材料进行分析。</p>
+            <p>已基于企业资料、10 道风险题和演示政策规则生成可解释结果。</p>
           </div>
           <div class="checkup-hero-actions">
             <button class="btn checkup-btn-primary" data-route="report">查看完整报告 ${icon("arrow", 17)}</button>
@@ -534,13 +613,13 @@ let smsTimer = null;
         <section class="checkup-results-card">
           <div class="section-title"><h2>本次结果</h2><span class="tag green">${APP_DATE}</span></div>
           <div class="metric-row" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line)">
-            <div class="metric green"><b>3</b><span>政策机会</span><small>预计节税 8.6–14.2 万元/年</small></div>
-            <div class="metric orange"><b>2</b><span>风险提醒</span><small>1 项建议优先处理</small></div>
-            <div class="metric blue"><b>86%</b><span>画像完整度</span><small>已完善 8 / 9 项信息</small></div>
+            <div class="metric green"><b>3</b><span>政策建议</span><small>符合条件与待补资料分开显示</small></div>
+            <div class="metric ${result.tone}"><b>${result.riskCount}</b><span>风险答案</span><small>综合风险：${result.level}</small></div>
+            <div class="metric blue"><b>${result.health}%</b><span>健康度</span><small>${result.pendingCount} 项待核验</small></div>
           </div>
           <div class="stack" style="margin-top:16px">
-            <button class="result-card card tap-card green" data-route="opportunities"><span class="mini-icon" style="color:var(--green);background:var(--green-soft)">${icon("gift", 24)}</span><span class="copy"><h3>查看政策红利</h3><p>3 项机会，预计节税 8.6–14.2 万元/年</p></span>${icon("chevron", 20, 'class="chev"')}</button>
-            <button class="result-card card tap-card orange" data-route="risks"><span class="mini-icon" style="color:var(--orange);background:var(--orange-soft)">${icon("alert", 24)}</span><span class="copy"><h3>查看风险提醒</h3><p>1 项建议优先处理，1 项持续观察</p></span>${icon("chevron", 20, 'class="chev"')}</button>
+            <button class="result-card card tap-card green" data-route="opportunities"><span class="mini-icon" style="color:var(--green);background:var(--green-soft)">${icon("gift", 24)}</span><span class="copy"><h3>查看政策建议</h3><p>3 条政策条目，适用性与金额仍待核验</p></span>${icon("chevron", 20, 'class="chev"')}</button>
+            <button class="result-card card tap-card orange" data-route="risks"><span class="mini-icon" style="color:var(--orange);background:var(--orange-soft)">${icon("alert", 24)}</span><span class="copy"><h3>查看风险提醒</h3><p>${result.riskCount} 项风险答案，${result.pendingCount} 项待核验</p></span>${icon("chevron", 20, 'class="chev"')}</button>
           </div>
           <div class="subtle-note" style="margin-top:16px">${icon("info", 18)}<span>企业画像或政策发生变化时，建议重新体检。历史报告会保留为时间快照。</span></div>
         </section>
@@ -631,9 +710,9 @@ let smsTimer = null;
   function assessmentIntroPage() {
     return layout(`
       ${statusBar()}
-      ${pageHead("AI 税务体检", "约 3 分钟完成最小企业画像")}
+      ${pageHead("AI 税务体检", "约 3 分钟完成企业资料与风险自测")}
       <div class="intro-visual"><div class="doc"><i></i><i></i><i style="width:65%"></i></div><div class="lens"></div></div>
-      <div class="center-copy"><h1>先了解企业，再精准判断</h1><p>回答 10 个简单问题，系统会结合政策依据与演示规则，生成企业专属的机会、风险和行动建议。</p></div>
+      <div class="center-copy"><h1>先了解企业，再精准判断</h1><p>先确认企业资料，再完成 10 道风险题。企业资料用于政策匹配与节税估算，风险等级只由 10 道题决定。</p></div>
       <div class="feature-points">
         <div class="feature-point"><span class="mini-icon intro-img"><img src="./intro-clock.png" alt="" width="42" height="42"></span><div><strong>渐进式采集</strong><span>不清楚的信息可以跳过，不会阻断体检</span></div></div>
         <div class="feature-point"><span class="mini-icon intro-img"><img src="./intro-shield.png" alt="" width="42" height="42"></span><div><strong>隐私边界清晰</strong><span>当前为本地 Demo，不会上传你的真实文件</span></div></div>
@@ -653,12 +732,47 @@ let smsTimer = null;
           <span class="mini-icon">${icon("camera", 25)}</span><span style="flex:1"><h3>识别营业执照</h3><p>使用示例执照体验 OCR 自动录入</p></span>${icon("chevron", 20, 'class="chev"')}
         </button>
         <button class="method-card card tap-card" data-action="start-questionnaire">
-          <span class="mini-icon" style="color:var(--green);background:var(--green-soft)">${icon("edit", 25)}</span><span style="flex:1"><h3>直接补充企业信息</h3><p>基于当前企业档案完成 10 项关键画像</p></span>${icon("chevron", 20, 'class="chev"')}
+          <span class="mini-icon" style="color:var(--green);background:var(--green-soft)">${icon("edit", 25)}</span><span style="flex:1"><h3>直接补充企业信息</h3><p>先确认资料，再进入 10 道风险题</p></span>${icon("chevron", 20, 'class="chev"')}
         </button>
       </div>
       <div class="section">
         <div class="subtle-note">${icon("info", 18)}<span>Demo 只读取你主动选择的文件名，不会上传或解析真实内容。比赛演示建议使用“识别营业执照”。</span></div>
       </div>
+    `, null, { className: "page-bg-blue" });
+  }
+
+  function companyProfilePage() {
+    const company = currentCompany();
+    return layout(`
+      ${statusBar()}
+      ${pageHead("企业经营资料", "用于政策筛选与节税估算")}
+      <form class="enterprise-profile" id="company-profile-form">
+        <section class="profile-form-card card">
+          <div class="profile-step"><span>1</span><div><b>基础信息</b><small>名称、地区、行业为必填项</small></div></div>
+          <div class="form-group"><label for="profile-name">企业名称 *</label><input id="profile-name" name="name" value="${escapeHtml(company.name)}" required /></div>
+          <div class="profile-grid">
+            <div class="form-group"><label for="profile-region">经营地区 *</label><input id="profile-region" name="region" value="${escapeHtml(company.region)}" required /></div>
+            <div class="form-group"><label for="profile-industry">所属行业 *</label><input id="profile-industry" name="industry" value="${escapeHtml(company.industry)}" required /></div>
+          </div>
+          <div class="profile-grid">
+            <div class="form-group"><label for="profile-taxpayer">纳税人类型</label><select id="profile-taxpayer" name="taxpayer"><option ${company.taxpayer === "一般纳税人" ? "selected" : ""}>一般纳税人</option><option ${company.taxpayer === "小规模纳税人" ? "selected" : ""}>小规模纳税人</option><option ${company.taxpayer === "不清楚" ? "selected" : ""}>不清楚</option></select></div>
+            <div class="form-group"><label for="profile-year">数据年度</label><select id="profile-year" name="dataYear"><option ${company.dataYear === "2025" ? "selected" : ""}>2025</option><option ${company.dataYear === "2026" ? "selected" : ""}>2026</option></select></div>
+          </div>
+        </section>
+        <section class="profile-form-card card">
+          <div class="profile-step"><span>2</span><div><b>经营数据</b><small>金额统一按人民币元填写，可暂时留空</small></div></div>
+          <div class="profile-grid">
+            <div class="form-group"><label for="profile-revenue">年度营业收入</label><input id="profile-revenue" name="revenue" type="number" min="0" inputmode="decimal" value="${escapeHtml(company.revenue || "")}" placeholder="例如 6800000" /></div>
+            <div class="form-group"><label for="profile-employees">员工人数</label><input id="profile-employees" name="employees" type="number" min="0" inputmode="numeric" value="${escapeHtml(company.employees || "")}" placeholder="例如 32" /></div>
+          </div>
+          <div class="profile-grid">
+            <div class="form-group"><label for="profile-rd">年度研发投入</label><input id="profile-rd" name="rdInvestment" type="number" min="0" inputmode="decimal" value="${escapeHtml(company.rdInvestment || "")}" placeholder="不知道可留空" /></div>
+            <div class="form-group"><label for="profile-has-rd">是否开展研发活动</label><select id="profile-has-rd" name="hasRd"><option ${company.hasRd === "是" ? "selected" : ""}>是</option><option ${company.hasRd === "否" ? "selected" : ""}>否</option><option ${company.hasRd === "不清楚" ? "selected" : ""}>不清楚</option></select></div>
+          </div>
+        </section>
+        <div class="subtle-note">${icon("shield", 18)}<span>这些资料只用于政策匹配和金额估算，不参与 10 道题的风险等级计算。</span></div>
+        <button class="btn primary block profile-next" type="submit">保存并进入风险自测 ${icon("arrow", 18)}</button>
+      </form>
     `, null, { className: "page-bg-blue" });
   }
 
@@ -668,15 +782,15 @@ let smsTimer = null;
     const pct = ((state.questionIndex + 1) / questions.length) * 100;
     return layout(`
       ${statusBar()}
-      ${pageHead("完善企业画像", `${state.questionIndex + 1} / ${questions.length}`)}
-      <div class="progress-wrap"><div class="progress-meta"><span>关键画像采集</span><span>${Math.round(pct)}%</span></div><div class="progress-track"><i style="width:${pct}%"></i></div></div>
+      ${pageHead("风险自测", `${state.questionIndex + 1} / ${questions.length}`)}
+      <div class="progress-wrap"><div class="progress-meta"><span>10 道题同等权重</span><span>${Math.round(pct)}%</span></div><div class="progress-track"><i style="width:${pct}%"></i></div></div>
       <div class="save-band compact">
         <span class="s-ico">${icon("coins", 18)}</span>
-        <div class="s-copy"><small>预计可节税区间 ${icon("info", 12)}</small><strong>8.6 – 14.2 <span>万元/年</span></strong></div>
+        <div class="s-copy"><small>节税空间测算 ${icon("info", 12)}</small><strong>待补数据</strong><p>需先完善经营画像</p></div>
         <div class="save-chart">${saveChartSvg("sbShadowQ")}</div>
       </div>
       <section class="question-wrap">
-        <div class="eyebrow">问题 ${state.questionIndex + 1}</div>
+        <div class="eyebrow">风险题 ${state.questionIndex + 1}</div>
         <h1>${q.title}</h1>
         <p class="question-help">${q.help}</p>
         <div class="choices">
@@ -685,7 +799,7 @@ let smsTimer = null;
       </section>
       <div class="sticky-cta cta-flush">
         <button class="btn ghost" data-action="prev-question" ${state.questionIndex === 0 ? "disabled" : ""}>上一步</button>
-        <button class="btn primary" data-action="next-question">${state.questionIndex === questions.length - 1 ? "确认画像" : "下一步"} ${icon("arrow", 17)}</button>
+        <button class="btn primary" data-action="next-question">${state.questionIndex === questions.length - 1 ? "查看测评摘要" : "下一步"} ${icon("arrow", 17)}</button>
       </div>
     `, null, { className: "page-bg-blue page-flex" });
   }
@@ -693,23 +807,23 @@ let smsTimer = null;
   function profileConfirmPage() {
     const company = currentCompany();
     const answers = questions.map((q) => [answerLabels[q.key], state.assessmentAnswers[q.key] || "待补充"]);
-    const missing = answers.filter(([, value]) => value === "待补充" || value === "暂不清楚").length;
+    const result = assessmentSummary();
     return layout(`
       ${statusBar()}
-      ${pageHead("确认企业画像", "确认后开始匹配政策与风险")}
+      ${pageHead("确认体检答案", "确认后生成不可变报告快照")}
       <section class="detail-hero">
-        <span class="tag green">画像完整度 ${Math.max(70, 100 - missing * 6)}%</span>
+        <div class="tags"><span class="tag ${result.tone}">综合风险：${result.level}</span><span class="tag blue">健康度 ${result.health}%</span></div>
         <h1>${escapeHtml(company.name)}</h1>
-        <p>${escapeHtml(company.region)} · 本次画像仅用于演示分析</p>
+        <p>${result.riskCount} 个风险答案 · ${result.pendingCount} 个待核验答案 · ${result.answeredCount}/10 已完成</p>
       </section>
       <section class="profile-summary card">
         ${answers.map(([label, value]) => `<div class="summary-row"><span>${label}</span><b>${escapeHtml(value)}</b></div>`).join("")}
       </section>
       <section class="section">
-        <div class="subtle-note">${icon(missing ? "alert" : "check", 18)}<span>${missing ? `仍有 ${missing} 项信息待补，系统会降低相关结论置信度，但不影响继续体检。` : "关键画像已完整，可开始生成专属分析。"}</span></div>
+        <div class="subtle-note">${icon(result.pendingCount ? "alert" : "check", 18)}<span>${result.pendingCount ? `有 ${result.pendingCount} 项回答为“不清楚”，按 0 分计入但会列入待核验清单。` : "10 道风险题均已明确回答，可开始生成专属分析。"}</span></div>
         <button class="text-link" data-action="edit-answers" style="margin:8px auto 0">${icon("edit", 15)} 返回修改</button>
       </section>
-      <div class="sticky-cta"><button class="btn primary block" data-action="start-analysis">开始 AI 分析 ${icon("sparkle", 18)}</button></div>
+      <div class="sticky-cta"><button class="btn primary block" data-action="start-analysis">生成体检报告 ${icon("sparkle", 18)}</button></div>
     `, null, { className: "page-bg-blue" });
   }
 
@@ -730,13 +844,19 @@ let smsTimer = null;
 
   function reportPage() {
     const company = currentCompany();
+    const result = assessmentSummary();
+    const hasReport = state.assessmentCompleted && result.answeredCount === questions.length;
+    const ringOffset = (326.7 * (1 - (hasReport ? result.health : 0) / 100)).toFixed(1);
+    const ringColor = result.tone === "green" ? "#0dac7f" : result.tone === "orange" ? "#ee8a16" : "#ed5a4f";
+    const revenueReady = Boolean(company.revenue);
+    const rdReady = company.hasRd === "是" && Boolean(company.rdInvestment);
     return layout(`
       <div class="report-scroll-area">
       <section class="report-hero">
         ${statusBar(true)}
         <div class="report-hero-top">
           <button class="icon-btn light" data-action="back" aria-label="返回">${icon("back", 22)}</button>
-          <div style="min-width:0;flex:1"><h1>企业税务体检报告</h1><p>生成于 ${APP_DATE} · 政策库更新至 2026.10.10</p></div>
+          <div style="min-width:0;flex:1"><h1>企业税务体检报告</h1><p>生成于 ${APP_DATE} · 当前演示政策库 3 条</p></div>
           <button class="icon-btn light" data-action="company-switch" aria-label="切换企业">${icon("report", 20)}</button>
         </div>
         <div class="company-report">
@@ -752,22 +872,22 @@ let smsTimer = null;
             <div class="ring-wrap">
               <svg viewBox="0 0 120 120" class="ring" aria-hidden="true">
                 <circle cx="60" cy="60" r="52" stroke="#dbe9fb" stroke-width="11" fill="none"/>
-                <circle cx="60" cy="60" r="52" stroke="#2f86ff" stroke-width="11" fill="none" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="45.7" transform="rotate(-90 60 60)"/>
+                <circle cx="60" cy="60" r="52" stroke="${ringColor}" stroke-width="11" fill="none" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="${ringOffset}" transform="rotate(-90 60 60)"/>
               </svg>
-              <div class="ring-center"><b>86%</b><span>整体健康度</span><em>良好</em></div>
+              <div class="ring-center"><b>${hasReport ? `${result.health}%` : "--"}</b><span>${hasReport ? `${result.level}风险` : "等待体检"}</span><em>${hasReport ? `${result.riskCount}/10 风险答案` : "完成后生成"}</em></div>
             </div>
             <div class="health-rows">
               <button class="hrow" data-route="opportunities"><span class="h-ico green">${icon("shield", 18)}</span><div class="h-copy"><b>3<small>项</small></b><span>政策机会</span></div>${icon("chevron", 16, 'class="h-chev"')}</button>
-              <button class="hrow" data-route="risks"><span class="h-ico orange">${icon("alert", 18)}</span><div class="h-copy"><b>2<small>项</small></b><span>风险提醒</span></div>${icon("chevron", 16, 'class="h-chev"')}</button>
-              <button class="hrow" data-route="profile-confirm"><span class="h-ico blue">${icon("report", 18)}</span><div class="h-copy"><b>1<small>项</small></b><span>待优化</span></div>${icon("chevron", 16, 'class="h-chev"')}</button>
+              <button class="hrow" data-route="risks"><span class="h-ico orange">${icon("alert", 18)}</span><div class="h-copy"><b>${hasReport ? result.riskCount : "--"}<small>项</small></b><span>风险答案</span></div>${icon("chevron", 16, 'class="h-chev"')}</button>
+              <button class="hrow" data-route="profile-confirm"><span class="h-ico blue">${icon("report", 18)}</span><div class="h-copy"><b>${hasReport ? result.pendingCount : "--"}<small>项</small></b><span>待核验</span></div>${icon("chevron", 16, 'class="h-chev"')}</button>
             </div>
           </div>
           <div class="save-band">
             <span class="s-ico">${icon("coins", 22)}</span>
             <div class="s-copy">
-              <small>预计可节税区间 ${icon("info", 12)}</small>
-              <strong>8.6 – 14.2 <span>万元/年</span></strong>
-              <p>基于所选营收、所得额与研发情况估算</p>
+              <small>节税空间测算 ${icon("info", 12)}</small>
+              <strong>${revenueReady && rdReady ? "已具备初步测算输入" : "待补完整经营数据"}</strong>
+              <p>${revenueReady && rdReady ? "具体金额将在后端规则阶段接入" : "营收与研发投入不完整，暂不输出金额"}</p>
             </div>
             <div class="save-chart">${saveChartSvg("sbShadow")}</div>
           </div>
@@ -783,8 +903,8 @@ let smsTimer = null;
             </button>
             <button class="find-card orange" data-route="risks">
               <div class="f-head"><span class="f-ico">${icon("alert", 19)}</span><b>税务风险提醒</b></div>
-              <div class="f-count"><strong>2</strong><small>项</small></div>
-              <p>发现潜在税务风险，建议重点关注</p>
+              <div class="f-count"><strong>${result.riskCount}</strong><small>项</small></div>
+              <p>综合${result.level}风险，另有 ${result.pendingCount} 项回答待核验</p>
               ${icon("chevron", 16, 'class="f-chev"')}
             </button>
           </div>
@@ -792,8 +912,8 @@ let smsTimer = null;
         <div class="sheet-sec">
           <div class="sheet-sec-head"><h3>建议优先处理</h3><span class="sort-note">按影响程度排序 ${icon("sort", 13)}</span></div>
           <div class="prio-list">
-            <div class="prio-item"><span class="p-no">1</span><div class="p-copy"><b>补齐研发项目材料归集</b><p>完善 3 笔研发费用归集资料，降低加计扣除风险</p></div>${icon("chevron", 18, 'class="p-chev"')}</div>
-            <div class="prio-item"><span class="p-no">2</span><div class="p-copy"><b>检查进项发票合规性</b><p>存在 1 项进项发票需进一步核验</p></div>${icon("chevron", 18, 'class="p-chev"')}</div>
+            <div class="prio-item"><span class="p-no">1</span><div class="p-copy"><b>${result.riskCount ? "复核风险答案与支持材料" : "保持当前税务管理流程"}</b><p>${result.riskCount ? `优先处理 ${result.riskCount} 项异常选择，并保留整改证据` : "当前答案未触发异常项，建议按季度复查"}</p></div>${icon("chevron", 18, 'class="p-chev"')}</div>
+            <div class="prio-item"><span class="p-no">2</span><div class="p-copy"><b>${result.pendingCount ? "补充待核验信息" : "核对经营数据口径"}</b><p>${result.pendingCount ? `${result.pendingCount} 个“不清楚”答案需要查询后确认` : "确认营收、研发投入与申报年度一致"}</p></div>${icon("chevron", 18, 'class="p-chev"')}</div>
             <div class="prio-item"><span class="p-no ghost">3</span><div class="p-copy"><b>准备软件企业清单重新申报</b><p>整理自研产品与收入占比材料，在申报窗口期内提交</p></div>${icon("chevron", 18, 'class="p-chev"')}</div>
           </div>
         </div>
@@ -809,19 +929,19 @@ let smsTimer = null;
       <div class="opp-card-head">
         <span class="opp-ico ${policy.matchClass}">${icon("gift", 22)}</span>
         <div class="opp-title"><h3>${policy.title}</h3></div>
-        <span class="tag ${policy.matchClass}">${state.recalculated && policy.id === "software-list" ? "中匹配" : policy.match}</span>
+        <span class="tag ${policy.matchClass}">${policy.match}</span>
       </div>
       <div class="opp-meta">${icon("report", 13)} ${policy.docNo} <span class="sep">|</span> 发布：${policy.pubDate}</div>
       <p class="opp-doctitle">${policy.docTitle}。</p>
       <div class="match-panel">
         <div class="match-panel-label">${icon("compass", 16)} 匹配结果</div>
         <div class="match-panel-rows">
-          <div class="mp-row green"><div class="mp-body"><div class="mp-head">${icon("check", 13)} 已满足主要条件</div><p>${policy.satisfied.join("，")}。</p></div>${icon("chevron", 15, 'class="mp-chev"')}</div>
-          ${policy.pending.length ? `<div class="mp-row orange"><div class="mp-body"><div class="mp-head">${icon("alert", 13)} 待确认条件</div><p>${state.recalculated && policy.id === "software-list" ? policy.pending.slice(1).join("，") + "。" : policy.pending.join("，") + "。"}</p></div>${icon("chevron", 15, 'class="mp-chev"')}</div>` : ""}
+          <div class="mp-row green"><div class="mp-body"><div class="mp-head">${icon("check", 13)} 当前已知</div><p>${policy.satisfied.length ? policy.satisfied.join("，") + "。" : "暂无可确认条件。"}</p></div>${icon("chevron", 15, 'class="mp-chev"')}</div>
+          ${policy.pending.length ? `<div class="mp-row orange"><div class="mp-body"><div class="mp-head">${icon("alert", 13)} 待确认条件</div><p>${policy.pending.join("，")}。</p></div>${icon("chevron", 15, 'class="mp-chev"')}</div>` : ""}
         </div>
       </div>
       <div class="opp-foot">
-        <div class="opp-save ${policy.matchClass}"><small>预计可节税 ${icon("info", 12)}</small><strong>${policy.savingShort}</strong><span>基于历史数据估算，仅供参考</span></div>
+        <div class="opp-save ${policy.matchClass}"><small>测算状态 ${icon("info", 12)}</small><strong>${policy.savingShort}</strong><span>需补充经营数据与适用条件</span></div>
         <button class="opp-fav ${fav ? "active" : ""}" data-action="toggle-favorite" data-id="${policy.id}" aria-label="收藏">${icon(fav ? "heartFill" : "heart", 18)}</button>
         <button class="btn primary opp-view" data-route="policy" data-id="${policy.id}">查看详情 ${icon("chevron", 15)}</button>
       </div>
@@ -829,9 +949,9 @@ let smsTimer = null;
   }
 
   function opportunitiesPage() {
-    const all = Object.values(policies);
-    const list = all.filter((p) => state.resultFilter === "all" || (state.resultFilter === "high" ? p.match === "高匹配" : p.match === "待补信息"));
-    const counts = { all: all.length, high: all.filter((p) => p.match === "高匹配").length, pending: all.filter((p) => p.match === "待补信息").length };
+    const all = Object.values(policies).map(resolvePolicy);
+    const list = all.filter((p) => state.resultFilter === "all" || (state.resultFilter === "eligible" ? p.match === "符合条件" : p.match === "待补资料"));
+    const counts = { all: all.length, eligible: all.filter((p) => p.match === "符合条件").length, pending: all.filter((p) => p.match === "待补资料").length };
     return layout(`
       <section class="opp-hero">
         ${statusBar(true)}
@@ -844,7 +964,7 @@ let smsTimer = null;
       <div class="opp-sheet">
         <div class="filter-tabs">
           <button class="filter-tab ${state.resultFilter === "all" ? "active" : ""}" data-action="result-filter" data-value="all">全部 ${counts.all}</button>
-          <button class="filter-tab ${state.resultFilter === "high" ? "active" : ""}" data-action="result-filter" data-value="high">高匹配 ${counts.high}</button>
+          <button class="filter-tab ${state.resultFilter === "eligible" ? "active" : ""}" data-action="result-filter" data-value="eligible">符合条件 ${counts.eligible}</button>
           <button class="filter-tab ${state.resultFilter === "pending" ? "active" : ""}" data-action="result-filter" data-value="pending">待补充 ${counts.pending}</button>
         </div>
         <div class="opp-list">
@@ -860,57 +980,60 @@ let smsTimer = null;
     return `<article class="policy-card card tap-card">
       <div class="policy-head">
         <span class="mini-icon" style="color:${policy.matchClass === "green" ? "var(--green)" : "var(--orange)"};background:${policy.matchClass === "green" ? "var(--green-soft)" : "var(--orange-soft)"}">${icon(policy.matchClass === "green" ? "gift" : "info", 22)}</span>
-        <div class="copy"><h3>${policy.title}</h3><p>${policy.doc}</p></div><span class="tag ${policy.matchClass}">${state.recalculated && policy.id === "software-list" ? "中匹配" : policy.match}</span>
+        <div class="copy"><h3>${policy.title}</h3><p>${policy.doc}</p></div><span class="tag ${policy.matchClass}">${policy.match}</span>
       </div>
-      ${compact ? "" : `<div class="match-row"><div class="match-box ok"><b>${icon("check", 14)} 已满足</b><p>${policy.satisfied.slice(0,2).join("、")}</p></div><div class="match-box wait"><b>${icon("alert", 14)} 待确认</b><p>${state.recalculated && policy.id === "software-list" ? "已补 1 项，仍需收入占比确认" : policy.pending.slice(0,2).join("、")}</p></div></div>`}
-      <div class="policy-foot"><div><small style="color:var(--muted)">测算可节税</small><div class="saving">${policy.saving}</div></div><div style="display:flex;gap:5px"><button class="icon-btn soft" data-action="toggle-favorite" data-id="${policy.id}" aria-label="${favorite ? "取消收藏" : "收藏"}">${icon(favorite ? "heartFill" : "heart", 19)}</button><button class="btn primary" style="min-height:40px;padding:9px 13px;font-size:11px" data-route="policy" data-id="${policy.id}">查看详情</button></div></div>
+      ${compact ? "" : `<div class="match-row"><div class="match-box ok"><b>${icon("check", 14)} 当前已知</b><p>${policy.satisfied.length ? policy.satisfied.slice(0,2).join("、") : "暂无可确认条件"}</p></div><div class="match-box wait"><b>${icon("alert", 14)} 待确认</b><p>${policy.pending.slice(0,2).join("、")}</p></div></div>`}
+      <div class="policy-foot"><div><small style="color:var(--muted)">影响与测算</small><div class="saving">${policy.saving}</div></div><div style="display:flex;gap:5px"><button class="icon-btn soft" data-action="toggle-favorite" data-id="${policy.id}" aria-label="${favorite ? "取消收藏" : "收藏"}">${icon(favorite ? "heartFill" : "heart", 19)}</button><button class="btn primary" style="min-height:40px;padding:9px 13px;font-size:11px" data-route="policy" data-id="${policy.id}">查看详情</button></div></div>
     </article>`;
   }
 
   function risksPage() {
+    const result = assessmentSummary();
+    const hasResult = state.assessmentCompleted && result.answeredCount === questions.length;
+    const findings = result.findings;
+    const pending = questions.filter((question) => isUnknownAnswer(state.assessmentAnswers[question.key] || ""));
     return layout(`
       ${statusBar()}
-      ${pageHead("风险提醒", "区分规则提示与材料核验结果")}
+      ${pageHead("风险提醒", "结果只由 10 道题计算")}
       <section class="detail-hero">
-        <span class="tag orange">综合风险：中</span>
-        <h1>2 项提醒需要你关注</h1>
-        <p>其中 1 项来自已上传演示材料的字段核验，1 项来自企业画像规则。</p>
+        <span class="tag ${hasResult ? result.tone : "blue"}">${hasResult ? `综合风险：${result.level}` : "尚未完成体检"}</span>
+        <h1>${hasResult ? `${result.riskCount} 项风险答案需要关注` : "完成 10 道题后生成风险清单"}</h1>
+        <p>${hasResult ? `健康度 ${result.health}% · ${result.pendingCount} 项待核验。每个异常答案同等计 1 分。` : "风险等级不会由企业营收或行业直接决定。"}</p>
       </section>
       <section class="section" style="margin-top:8px"><div class="stack">
-        ${Object.values(risks).map((risk) => `<article class="risk-card card tap-card" data-route="risk" data-id="${risk.id}">
-          <div class="risk-head"><span class="mini-icon" style="color:${risk.levelClass === "orange" ? "var(--orange)" : "var(--blue)"};background:${risk.levelClass === "orange" ? "var(--orange-soft)" : "var(--blue-soft)"}">${icon("alert", 22)}</span><div class="copy"><h3>${risk.title}</h3><p>${risk.sourceType}</p></div><span class="tag ${risk.levelClass}">${risk.level}</span></div>
-          <div class="risk-matrix" style="margin-top:14px"><div class="risk-line"><span>为什么</span><b>${risk.reason}</b></div><div class="risk-line"><span>下一步</span><b>${risk.advice}</b></div></div>
-          <div class="risk-foot"><span style="color:var(--muted);font-size:10px">点击查看证据与处理建议</span>${icon("chevron", 19)}</div>
-        </article>`).join("")}
+        ${findings.length ? findings.map((question) => `<article class="risk-card card">
+          <div class="risk-head"><span class="mini-icon" style="color:var(--orange);background:var(--orange-soft)">${icon("alert", 22)}</span><div class="copy"><h3>${answerLabels[question.key]}</h3><p>风险题 ${questions.indexOf(question) + 1} · 同等权重 1 分</p></div><span class="tag orange">风险 +1</span></div>
+          <div class="risk-matrix" style="margin-top:14px"><div class="risk-line"><span>你的回答</span><b>${escapeHtml(state.assessmentAnswers[question.key])}</b></div><div class="risk-line"><span>下一步</span><b>核验相关业务资料并记录处理结论，必要时咨询专业税务人员。</b></div></div>
+        </article>`).join("") : `<div class="empty-state"><span class="mini-icon" style="color:${hasResult ? "var(--green)" : "var(--blue)"};background:${hasResult ? "var(--green-soft)" : "var(--blue-soft)"}">${icon(hasResult ? "check" : "scan", 25)}</span><h3>${hasResult ? "本次未触发风险答案" : "还没有体检结果"}</h3><p>${hasResult ? "建议保持现有流程，并定期重新体检。" : "请先从体检页完成企业资料和风险自测。"}</p>${hasResult ? "" : `<button class="btn primary" style="margin-top:16px" data-route="assessment-intro">开始体检</button>`}</div>`}
+        ${pending.length ? `<div class="subtle-note">${icon("info", 18)}<span>待核验：${pending.map((question) => answerLabels[question.key]).join("、")}。这些答案暂按 0 分计算。</span></div>` : ""}
       </div></section>
       ${trustNote()}
     `, null, { className: "page-bg-blue" });
   }
 
   function policyDetailPage() {
-    const policy = policies[routeParams.id] || policies["software-list"];
+    const policy = resolvePolicy(policies[routeParams.id] || policies["software-list"]);
     const favorite = state.favorites.includes(policy.id);
-    const recalced = state.recalculated && policy.id === "software-list";
     return layout(`
       <div class="detail-scroll-area">
       ${statusBar()}
       ${pageHead("政策详情", policy.valid, `<button class="icon-btn soft" data-action="toggle-favorite" data-id="${policy.id}" aria-label="收藏">${icon(favorite ? "heartFill" : "heart", 20)}</button>`)}
       <section class="detail-hero">
-        <div class="tags"><span class="tag ${policy.matchClass}">${recalced ? "中匹配" : policy.match}</span>${policy.tags.map((tag) => `<span class="tag gray">${tag}</span>`).join("")}</div>
+        <div class="tags"><span class="tag ${policy.matchClass}">${policy.match}</span>${policy.tags.map((tag) => `<span class="tag gray">${tag}</span>`).join("")}</div>
         <h1>${policy.title}</h1>
         <p>${policy.summary}</p>
       </section>
       <section class="detail-section card">
         <h2>${icon("gift", 19)} 对当前企业的价值</h2>
-        <div class="estimate-card" style="margin:0"><small>初步测算可节税区间</small><strong>${policy.saving}</strong><span>为区间估算，最终以实际业务数据与申报口径为准</span></div>
+        <div class="estimate-card" style="margin:0"><small>影响与测算状态</small><strong>${policy.saving}</strong><span>当前未读取真实经营数据，不能形成金额结论</span></div>
       </section>
       <section class="detail-section card">
         <h2>${icon("check", 19)} 适用条件判断</h2>
         <div class="risk-matrix">
-          ${policy.satisfied.map((item) => `<div class="risk-line"><span style="color:var(--green)">已满足</span><b>${item}</b></div>`).join("")}
-          ${policy.pending.map((item, index) => `<div class="risk-line"><span style="color:var(--orange)">${recalced && index === 0 ? "已补充" : "待确认"}</span><b>${item}</b></div>`).join("")}
+          ${policy.satisfied.map((item) => `<div class="risk-line"><span style="color:var(--green)">当前已知</span><b>${item}</b></div>`).join("")}
+          ${policy.pending.map((item) => `<div class="risk-line"><span style="color:var(--orange)">待确认</span><b>${item}</b></div>`).join("")}
         </div>
-        ${policy.pending.length ? `<button class="btn ${recalced ? "ghost" : "secondary"} block" style="margin-top:15px" data-action="recalculate" data-id="${policy.id}">${recalced ? `${icon("check", 17)} 已补充，匹配结果已更新` : `${icon("edit", 17)} 补充信息后重算`}</button>` : ""}
+        ${policy.pending.length ? `<button class="btn secondary block" style="margin-top:15px" data-action="recalculate-info" data-id="${policy.id}">${icon("edit", 17)} 补充信息后重算</button>` : ""}
       </section>
       <section class="detail-section card">
         <h2>${icon("book", 19)} 政策依据</h2>
@@ -935,24 +1058,45 @@ let smsTimer = null;
         <p>${risk.reason}</p>
       </section>
       <section class="detail-section card"><h2>${icon("layers", 19)} 判断说明</h2><div class="risk-matrix"><div class="risk-line"><span>风险来源</span><b>${risk.sourceType}</b></div><div class="risk-line"><span>产生原因</span><b>${risk.reason}</b></div><div class="risk-line"><span>可能影响</span><b>${risk.impact}</b></div><div class="risk-line"><span>建议措施</span><b>${risk.advice}</b></div></div></section>
-      <section class="detail-section card"><h2>${icon("file", 19)} 发现的证据</h2><ul>${risk.evidence.map((item) => `<li>${item}</li>`).join("")}</ul><div class="subtle-note" style="margin-top:13px">${icon("info", 16)}<span>当前证据来自演示材料，不代表对真实申报数据的核验结果。</span></div></section>
+      <section class="detail-section card"><h2>${icon("file", 19)} 待核验事项</h2><ul>${risk.evidence.map((item) => `<li>${item}</li>`).join("")}</ul><div class="subtle-note" style="margin-top:13px">${icon("info", 16)}<span>当前未读取真实文件，以上是建议核验的范围，不是已发现的事实。</span></div></section>
       <section class="detail-section card"><h2>${icon("check", 19)} 处理清单</h2><ol><li>确认差异或缺口是否真实存在</li><li>补充合同、台账、凭证或口径说明</li><li>由财务负责人复核后留存处理记录</li></ol></section>
       ${trustNote()}
       <div class="sticky-cta"><button class="btn secondary" data-action="mark-handled">标记已处理</button><button class="btn primary" data-action="ask-ai" data-context="风险：${risk.title}">${icon("bot", 17)} 问 AI</button></div>
     `, null, { className: "page-bg-blue" });
   }
 
+  function normalizeSearchText(value) {
+    return String(value || "").toLowerCase().replace(/\s+/g, "");
+  }
+
+  function collectSearchText(value) {
+    if (Array.isArray(value)) return value.map(collectSearchText).join(" ");
+    if (value && typeof value === "object") return Object.values(value).map(collectSearchText).join(" ");
+    return String(value || "");
+  }
+
+  function matchesSearch(item, query) {
+    const needle = normalizeSearchText(query);
+    return !needle || normalizeSearchText(collectSearchText(item)).includes(needle);
+  }
+
   function searchPage() {
     const query = state.searchQuery || "研发费用";
+    const results = state.searchTab === "policy"
+      ? Object.values(policies).map(resolvePolicy).filter((policy) => matchesSearch(policy, query))
+      : cases.filter((item) => matchesSearch(item, query));
+    const cards = state.searchTab === "policy"
+      ? results.map((policy) => `<article class="search-result card tap-card" tabindex="0" data-route="policy" data-id="${policy.id}"><div class="result-head"><span class="mini-icon">${icon("report", 21)}</span><div class="copy"><h3>${policy.title}</h3><p>${policy.summary}</p></div>${icon("chevron", 18)}</div><div class="result-meta"><span>${policy.source}</span><span>${policy.valid.split(" · ")[0]}</span><span class="tag ${policy.matchClass}">${policy.match}</span></div></article>`).join("")
+      : results.map((item) => `<article class="search-result card tap-card" tabindex="0" data-route="case" data-id="${item.id}"><div class="result-head"><span class="mini-icon" style="color:var(--green);background:var(--green-soft)">${icon("book", 21)}</span><div class="copy"><h3>${item.title}</h3><p>${item.summary}</p></div>${icon("chevron", 18)}</div><div class="tags" style="margin-top:12px">${item.tags.map((tag) => `<span class="tag gray">${tag}</span>`).join("")}</div></article>`).join("");
     return layout(`
       ${statusBar()}
       ${pageHead("政策与案例", "检索权威政策和实务参考")}
       <form class="search-page-box" id="search-page-form"><label class="search-box">${icon("search", 20)}<input id="search-page-input" value="${escapeHtml(query)}" aria-label="搜索" /><button class="search-go" type="submit">${icon("arrow", 19)}</button></label></form>
       <div class="filter-tabs"><button class="filter-tab ${state.searchTab === "policy" ? "active" : ""}" data-action="search-tab" data-value="policy">政策文件</button><button class="filter-tab ${state.searchTab === "case" ? "active" : ""}" data-action="search-tab" data-value="case">实务案例</button></div>
-      <div class="result-count">找到与“${escapeHtml(query)}”相关的演示结果</div>
-      <section class="section" style="margin-top:12px"><div class="stack">
-        ${state.searchTab === "policy" ? Object.values(policies).map((policy) => `<article class="search-result card tap-card" data-route="policy" data-id="${policy.id}"><div class="result-head"><span class="mini-icon">${icon("report", 21)}</span><div class="copy"><h3>${policy.title}</h3><p>${policy.summary}</p></div>${icon("chevron", 18)}</div><div class="result-meta"><span>${policy.source}</span><span>${policy.valid.split(" · ")[0]}</span><span class="tag ${policy.matchClass}">${policy.match}</span></div></article>`).join("") : cases.map((item) => `<article class="search-result card tap-card" data-route="case" data-id="${item.id}"><div class="result-head"><span class="mini-icon" style="color:var(--green);background:var(--green-soft)">${icon("book", 21)}</span><div class="copy"><h3>${item.title}</h3><p>${item.summary}</p></div>${icon("chevron", 18)}</div><div class="tags" style="margin-top:12px">${item.tags.map((tag) => `<span class="tag gray">${tag}</span>`).join("")}</div></article>`).join("")}
-      </div></section>
+      <div class="result-count">${results.length ? `找到 ${results.length} 条与“${escapeHtml(query)}”相关的结果` : `未找到与“${escapeHtml(query)}”相关的结果`}</div>
+      ${results.length
+        ? `<section class="section" style="margin-top:12px"><div class="stack">${cards}</div></section>`
+        : `<div class="empty-state"><span class="mini-icon">${icon("search", 25)}</span><h3>没有匹配结果</h3><p>可以尝试政策文号、税种、行业或案例关键词。</p></div>`}
       ${trustNote()}
     `, "home", { className: "page-bg-blue" });
   }
@@ -983,7 +1127,7 @@ let smsTimer = null;
     return layout(`
       <section class="ai-hero">
         ${statusBar(true)}
-        <div class="home-top"><div><h1>AI 税务助手</h1><p>只聚焦税务及相关涉税问题</p></div><button class="icon-btn light" data-action="chat-history" aria-label="历史会话">${icon("history", 21)}</button></div>
+        <div class="home-top"><div><h1>AI 经营助手</h1><p>税务有依据，经营问题也能聊</p></div><button class="icon-btn light" data-action="chat-history" aria-label="历史会话">${icon("history", 21)}</button></div>
         <div class="ai-context">${icon("layers", 17)}<span>${state.aiContext ? `已携带：${escapeHtml(state.aiContext)}` : `当前企业：${escapeHtml(company.name)}`}</span><button data-action="clear-context" style="color:#fff;background:none;font-size:10px">${state.aiContext ? "清除" : "切换"}</button></div>
       </section>
       <section class="chat-feed" id="chat-feed">
@@ -991,12 +1135,12 @@ let smsTimer = null;
         ${state.aiBusy ? `<div class="message"><span class="avatar">${icon("bot", 18)}</span><div class="bubble"><span class="typing"><i></i><i></i><i></i></span></div></div>` : ""}
       </section>
       <div class="suggestions">
-        ${["需要准备哪些材料？", "这项政策适用到什么时候？", "先处理哪个风险？"].map((text) => `<button class="suggestion" data-action="quick-question" data-value="${text}">${text}</button>`).join("")}
+        ${["先处理哪个风险？", "研发政策有什么依据？", "怎么改善现金流？"].map((text) => `<button class="suggestion" data-action="quick-question" data-value="${text}">${text}</button>`).join("")}
       </div>
       <form class="chat-compose" id="chat-form">
         <input type="file" id="file-input" class="sr-only" accept="image/*,.pdf,.xlsx,.xls,.doc,.docx" />
         <button type="button" class="icon-btn" data-action="choose-file" aria-label="添加文件">${icon("attach", 20)}</button>
-        <input id="chat-input" autocomplete="off" aria-label="输入税务问题" placeholder="输入税务问题，或上传文件…" />
+        <input id="chat-input" autocomplete="off" aria-label="输入经营或税务问题" placeholder="问税务、融资、现金流或经营问题…" />
         <button class="icon-btn send" aria-label="发送" type="submit">${icon("send", 19)}</button>
       </form>
     `, "ai", { className: "ai-page" });
@@ -1142,18 +1286,11 @@ let smsTimer = null;
             <button class="auth-tab ${!isLogin ? "active" : ""}" data-action="auth-tab" data-value="register">注册</button>
           </div>
           <form class="auth-form" id="auth-form">
-            <input class="auth-input" id="auth-phone" type="tel" maxlength="11" placeholder="请输入手机号" autocomplete="tel" />
-            ${isLogin ? `
-              <input class="auth-input" id="auth-password" type="password" placeholder="请输入密码" autocomplete="current-password" />
-            ` : `
-              <div class="sms-row">
-                <input class="auth-input" id="auth-sms-code" type="text" maxlength="6" placeholder="验证码" autocomplete="off" />
-                <button type="button" class="sms-btn ${state.smsCountdown > 0 ? "counting" : ""}" data-action="send-sms" ${state.smsCountdown > 0 ? "disabled" : ""}>${state.smsCountdown > 0 ? state.smsCountdown + "s 后重发" : "发送验证码"}</button>
-              </div>
-              <input class="auth-input" id="auth-password" type="password" placeholder="设置密码（6-16位）" autocomplete="new-password" />
-            `}
+            <input class="auth-input" id="auth-email" type="email" placeholder="邮箱地址" value="${isLogin ? "demo@shuicetong.cn" : ""}" autocomplete="email" />
+            <input class="auth-input" id="auth-password" type="password" placeholder="${isLogin ? "请输入密码" : "设置密码（至少 8 位）"}" value="${isLogin ? "Demo1234" : ""}" autocomplete="${isLogin ? "current-password" : "new-password"}" />
             <button type="submit" class="auth-submit">${isLogin ? "登录" : "注册"}</button>
           </form>
+          ${isLogin ? `<button class="auth-forgot" data-action="forgot-password">忘记密码？</button><div class="demo-account">演示账号：demo@shuicetong.cn / Demo1234</div>` : `<div class="demo-account">注册后会模拟发送验证邮件；正式版由 Supabase Auth 完成验证。</div>`}
           <p class="auth-footer">登录即表示同意《用户协议》和《隐私政策》<br />演示 Demo · 不收集真实信息</p>
         </div>
         <button class="auth-skip" data-action="auth-skip">跳过，先体验 Demo</button>
@@ -1167,7 +1304,7 @@ let smsTimer = null;
       return `<div class="overlay" data-action="close-modal"><section class="sheet" data-stop><div class="sheet-handle"></div><div class="sheet-head"><h2>切换当前企业</h2><button class="icon-btn soft" data-action="close-modal">${icon("close", 20)}</button></div><p>体检、AI 问答与历史数据都会基于当前企业展开。</p><div class="stack">${state.companies.map((company) => `<button class="company-card card tap-card" data-action="switch-company" data-id="${company.id}"><div class="company-card-top"><span class="mini-icon">${icon("building", 22)}</span><div class="copy"><h3>${escapeHtml(company.name)}</h3><p>${escapeHtml(company.status)}</p></div>${state.currentCompany === company.id ? '<span class="tag green">当前</span>' : icon("chevron", 18)}</div></button>`).join("")}</div><button class="btn secondary block" style="margin-top:12px" data-action="add-company">${icon("plus", 17)} 新建企业档案</button></section></div>`;
     }
     if (modal.type === "add-company") {
-      return `<div class="overlay" data-action="close-modal"><form class="sheet" id="add-company-form" data-stop><div class="sheet-handle"></div><div class="sheet-head"><h2>新建企业档案</h2><button type="button" class="icon-btn soft" data-action="close-modal">${icon("close", 20)}</button></div><p>先创建最小档案，其他经营信息可以在体检中补充。</p><div class="form-group"><label for="company-name">企业名称</label><input id="company-name" name="companyName" placeholder="例如：杭州新悦科技有限公司" required /></div><div class="form-group"><label for="company-region">经营所在地</label><input id="company-region" name="companyRegion" value="浙江省杭州市" required /></div><button class="btn primary block" style="margin-top:20px" type="submit">创建并开始画像</button></form></div>`;
+      return `<div class="overlay" data-action="close-modal"><form class="sheet" id="add-company-form" data-stop><div class="sheet-handle"></div><div class="sheet-head"><h2>新建企业档案</h2><button type="button" class="icon-btn soft" data-action="close-modal">${icon("close", 20)}</button></div><p>先创建最小档案，其他经营信息可以在体检中补充。</p><div class="form-group"><label for="company-name">企业名称</label><input id="company-name" name="companyName" placeholder="例如：杭州新悦科技有限公司" required /></div><div class="form-group"><label for="company-region">经营所在地</label><input id="company-region" name="companyRegion" value="浙江省杭州市" required /></div><div class="form-group"><label for="company-industry">所属行业</label><input id="company-industry" name="companyIndustry" placeholder="例如：软件和信息技术服务业" required /></div><button class="btn primary block" style="margin-top:20px" type="submit">创建并开始完善资料</button></form></div>`;
     }
     if (modal.type === "file-task") {
       return `<div class="overlay" data-action="close-modal"><section class="sheet" data-stop><div class="sheet-handle"></div><div class="sheet-head"><h2>选择分析目标</h2><button class="icon-btn soft" data-action="close-modal">${icon("close", 20)}</button></div><div class="subtle-note">${icon("file", 18)}<span>已识别为演示资料：<b>${escapeHtml(modal.fileName)}</b><br />请先选择你希望 AI 完成的任务。</span></div><div class="task-options">${[
@@ -1178,7 +1315,7 @@ let smsTimer = null;
       ].map(([name, ico, desc]) => `<button class="task-option" data-action="file-task" data-value="${name}" data-file="${escapeHtml(modal.fileName)}">${icon(ico, 22)}<strong>${name}</strong><span>${desc}</span></button>`).join("")}</div><p style="text-align:center">Demo 仅使用文件名生成模拟结果，不会读取或上传真实内容。</p></section></div>`;
     }
     if (modal.type === "notifications") {
-      return `<div class="overlay" data-action="close-modal"><section class="sheet" data-stop><div class="sheet-handle"></div><div class="sheet-head"><h2>通知</h2><button class="icon-btn soft" data-action="close-modal">${icon("close", 20)}</button></div><div class="stack"><div class="asset-row card"><span class="asset-icon">${icon("bell", 21)}</span><span class="copy"><strong>研发费用政策依据已更新</strong><span>政策库已于 2026.10.10 完成来源复核</span></span></div><div class="asset-row card"><span class="asset-icon">${icon("alert", 21)}</span><span class="copy"><strong>建议补充 1 项企业画像</strong><span>补充软件产品收入占比可提高匹配准确度</span></span></div></div></section></div>`;
+      return `<div class="overlay" data-action="close-modal"><section class="sheet" data-stop><div class="sheet-handle"></div><div class="sheet-head"><h2>通知</h2><button class="icon-btn soft" data-action="close-modal">${icon("close", 20)}</button></div><div class="stack"><div class="asset-row card"><span class="asset-icon">${icon("bell", 21)}</span><span class="copy"><strong>演示政策条目已完成来源校对</strong><span>当前仅展示 3 条政策，完整资料库仍在整理</span></span></div><div class="asset-row card"><span class="asset-icon">${icon("alert", 21)}</span><span class="copy"><strong>建议补充企业画像</strong><span>补充软件产品收入占比可提高匹配准确度</span></span></div></div></section></div>`;
     }
     if (modal.type === "reset") {
       return `<div class="overlay"><section class="modal-alert" data-stop><span class="mini-icon" style="color:var(--red);background:var(--red-soft)">${icon("refresh", 25)}</span><h2>重置 Demo 数据？</h2><p>这会清空本地保存的问卷、收藏、企业切换与 AI 会话，恢复到首次打开状态。</p><div class="modal-actions"><button class="btn ghost" data-action="close-modal">取消</button><button class="btn primary" data-action="confirm-reset">确认重置</button></div></section></div>`;
@@ -1194,6 +1331,7 @@ let smsTimer = null;
     checkup: checkupPage,
     "assessment-intro": assessmentIntroPage,
     "assessment-method": assessmentMethodPage,
+    "company-profile": companyProfilePage,
     questionnaire: questionnairePage,
     "profile-confirm": profileConfirmPage,
     analyzing: analyzingPage,
@@ -1230,19 +1368,20 @@ let smsTimer = null;
   function startQuestionnaire(useOcr = false) {
     state.questionIndex = 0;
     if (useOcr) {
-      state.assessmentAnswers = {
-        ...state.assessmentAnswers,
+      Object.assign(currentCompany(), {
+        name: "杭州星云智创科技有限公司",
+        short: "星云智创",
         industry: "软件和信息技术服务业",
         region: "浙江省杭州市",
         taxpayer: "一般纳税人"
-      };
+      });
       saveState();
       showToast("已识别示例营业执照，3 项基础信息已预填", "success");
-      setTimeout(() => go("questionnaire"), 380);
+      setTimeout(() => go("company-profile"), 380);
       return;
     }
     saveState();
-    go("questionnaire");
+    go("company-profile");
   }
 
   function runAnalysis() {
@@ -1270,13 +1409,19 @@ let smsTimer = null;
     saveState();
     render();
     setTimeout(() => {
-      let response = `<strong>先给你一个可执行的结论：</strong><br />建议先核对当前企业画像和政策适用条件，再准备对应材料。`;
+      const taxQuestion = /税|政策|发票|申报|优惠|扣除|征收|纳税/.test(clean);
+      let response = `<strong>可以，我们先把问题拆成可执行步骤。</strong><br />作为小微企业经营助手，我可以帮你梳理目标、约束和下一步；如果涉及现金流、融资、成本或税务，也可以结合当前企业上下文继续分析。`;
       if (clean.includes("材料")) {
-        response = `<strong>建议按 3 组准备材料：</strong><ul><li>主体与申报资料：营业执照、企业所得税申报表</li><li>业务证明：研发项目立项、工时、领料与合同</li><li>归集底稿：辅助账、总账及差异说明</li></ul><div class="cite">依据：研发费用加计扣除相关政策口径 · 更新于 2026.10.10</div>`;
+        response = `<strong>建议按 3 组准备材料：</strong><ul><li>主体与申报资料：营业执照、企业所得税申报表</li><li>业务证明：研发项目立项、工时、领料与合同</li><li>归集底稿：辅助账、总账及差异说明</li></ul><div class="cite">演示检索来源：当前政策条目与企业体检上下文 · 正式版需复核政策版本</div>`;
       } else if (clean.includes("风险") || clean.includes("先处理")) {
-        response = `<strong>建议先处理“研发费用归集凭证不完整”。</strong><br />它直接影响可扣除金额，且现有演示材料已发现项目编号与工时记录缺口。开票与收入确认时间差可并行核对并保留跨期说明。<div class="cite">判断类型：材料样例核验 + 企业画像规则提示</div>`;
+        const result = assessmentSummary();
+        response = `<strong>建议先处理已确认的异常答案。</strong><br />本次共有 ${result.riskCount} 个风险答案、${result.pendingCount} 个待核验答案。先为异常项补齐支持材料，再逐项确认“不清楚”的回答；当前 Demo 未读取真实文件，不能断言已经发生具体违规。<div class="cite">依据：当前企业 10 道风险题快照 · 规则版本 demo-v2</div>`;
       } else if (clean.includes("什么时候") || clean.includes("有效")) {
-        response = `<strong>页面显示的是当前演示政策库状态。</strong><br />正式使用时应以政策原文、最新公告及主管税务机关口径为准。我会同时提示发布日期、有效期和最近复核时间。`;
+        response = `<strong>页面显示的是当前演示政策库状态。</strong><br />正式使用时应以政策原文、最新公告及主管税务机关口径为准；没有检索到可靠依据时，我不会给出确定结论。<div class="cite">演示来源：资料库政策元数据 · 当前未连接真实 RAG</div>`;
+      } else if (clean.includes("现金流") || clean.includes("融资") || clean.includes("成本")) {
+        response = `<strong>先看现金安全边界，再谈融资。</strong><ul><li>列出未来 13 周确定性现金流入与刚性支出</li><li>把回款周期、库存和税费节点放在同一张表里</li><li>缺口确定后，再比较授信、股东借款与供应链融资成本</li></ul><div class="cite">经营建议，不构成贷款或投资承诺；可继续告诉我月均收入、账期和固定支出。</div>`;
+      } else if (taxQuestion) {
+        response = `<strong>这是税务或政策问题，需要先检索依据。</strong><br />当前交互稿尚未连接真实 RAG，因此我只能展示回答流程，不能给出确定税务结论。正式版会返回政策名称、文号、有效期和引用片段。<div class="cite">当前状态：未连接真实知识检索 · 不生成无来源结论</div>`;
       }
       state.chatMessages.push({ role: "assistant", html: response });
       state.aiBusy = false;
@@ -1319,6 +1464,10 @@ let smsTimer = null;
         break;
       case "settings":
         modal = { type: "info", icon: "settings", title: "设置（演示）", text: "正式产品可在这里管理账号、隐私、企业成员权限与通知偏好。" };
+        render();
+        break;
+      case "more-services":
+        modal = { type: "info", icon: "more", title: "更多服务", text: "更多企业税务场景仍在规划中。当前可使用体检、政策与案例检索、AI 问答、企业档案和文件演示功能。" };
         render();
         break;
       case "start-questionnaire":
@@ -1386,12 +1535,9 @@ let smsTimer = null;
         showToast(state.favorites.includes(id) ? "已收藏，稍后可在“我的”查看" : "已取消收藏", "success");
         break;
       }
-      case "recalculate":
-        if (state.recalculated) return;
-        state.recalculated = true;
-        saveState();
+      case "recalculate-info":
+        modal = { type: "info", icon: "edit", title: "画像字段将在下一阶段接入", text: "目前先展示需要补充的条件，不会在没有经营数据的情况下伪造重算结果。" };
         render();
-        showToast("已补充清单申报材料，匹配度更新为“中匹配”", "success");
         break;
       case "official-source":
         modal = { type: "info", icon: "book", title: "官方来源说明", text: "正式版将跳转财政部、国家税务总局或属地税务机关原文，并保留文号、发布日期、有效期与抓取时间。当前 Demo 不访问外部网站。" };
@@ -1433,7 +1579,7 @@ let smsTimer = null;
         const task = target.dataset.value;
         const fileName = target.dataset.file;
         modal = null;
-        state.files.unshift({ name: fileName, type: "本地演示文件", date: APP_DATE, status: `已完成${task}` });
+        state.files.unshift({ name: fileName, type: "本地演示文件", date: APP_DATE, status: `演示完成 · ${task}（未读取内容）` });
         state.aiContext = `文件：${fileName}`;
         state.chatMessages.push({ role: "user", html: `请对 <strong>${escapeHtml(fileName)}</strong> 进行${task}。` });
         state.chatMessages.push({ role: "assistant", html: `<strong>${task}演示结果：</strong><ul><li>已识别 2 项需要复核的信息</li><li>建议先确认数据口径与证明材料</li><li>未发现需要立即中止申报的高风险项</li></ul><div class="cite">Demo 仅根据文件名生成模拟结果，未读取真实文件内容</div>` });
@@ -1473,8 +1619,6 @@ let smsTimer = null;
         break;
       case "auth-tab":
         state.authTab = target.dataset.value;
-        state.smsCountdown = 0;
-        clearInterval(smsTimer);
         render();
         break;
       case "auth-skip":
@@ -1482,23 +1626,12 @@ let smsTimer = null;
         saveState();
         go("home");
         break;
-      case "send-sms": {
-        const phoneEl = document.getElementById("auth-phone");
-        const phone = (phoneEl?.value || "").trim();
-        if (!/^1\d{10}$/.test(phone)) { showToast("请输入正确的手机号"); break; }
-        state.smsCountdown = 60;
+      case "forgot-password":
+        modal = { type: "info", icon: "message", title: "重置邮件已发送（演示）", text: "正式版将由 Supabase Auth 向账号邮箱发送安全的密码重置链接。" };
         render();
-        showToast("验证码已发送（演示模式）", "success");
-        clearInterval(smsTimer);
-        smsTimer = setInterval(() => {
-          state.smsCountdown -= 1;
-          if (state.smsCountdown <= 0) { clearInterval(smsTimer); state.smsCountdown = 0; }
-          render();
-        }, 1000);
         break;
-      }
       case "logout":
-        state.auth = { isLoggedIn: false, phone: "", name: "" };
+        state.auth = { isLoggedIn: false, name: "", emailVerified: false };
         state.authTab = "login";
         saveState();
         go("auth");
@@ -1544,36 +1677,55 @@ let smsTimer = null;
       input.value = "";
       sendChat(value);
     } else if (form.id === "auth-form") {
-      const phone = (form.querySelector("#auth-phone")?.value || "").trim();
+      const email = (form.querySelector("#auth-email")?.value || "").trim().toLowerCase();
       const password = (form.querySelector("#auth-password")?.value || "").trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showToast("请输入正确的邮箱地址"); return; }
+      if (password.length < 8) { showToast("密码至少 8 位"); return; }
       if (state.authTab === "register") {
-        const smsCode = (form.querySelector("#auth-sms-code")?.value || "").trim();
-        if (!phone || !smsCode || !password) { showToast("请填写完整信息"); return; }
-        if (!/^1\d{10}$/.test(phone)) { showToast("请输入正确的手机号"); return; }
-        if (smsCode.length < 4) { showToast("请输入正确的验证码"); return; }
-        if (password.length < 6) { showToast("密码至少 6 位"); return; }
-        clearInterval(smsTimer);
-        state.smsCountdown = 0;
-        state.auth = { isLoggedIn: true, phone, name: phone.replace(/(\d{3})\d{4}(\d{4})/, "$1****$2") };
+        state.auth = { isLoggedIn: true, name: email, emailVerified: true };
         state.authTab = "login";
         saveState();
-        showToast("注册成功", "success");
+        showToast("验证邮件已模拟完成，注册成功", "success");
         go("home");
       } else {
-        if (!phone || !password) { showToast("请填写手机号和密码"); return; }
-        if (!/^1\d{10}$/.test(phone)) { showToast("请输入正确的手机号"); return; }
-        state.auth = { isLoggedIn: true, phone, name: phone.replace(/(\d{3})\d{4}(\d{4})/, "$1****$2") };
+        state.auth = { isLoggedIn: true, name: email, emailVerified: true };
         saveState();
         showToast("登录成功", "success");
         go("home");
       }
+    } else if (form.id === "company-profile-form") {
+      const data = new FormData(form);
+      const company = currentCompany();
+      const name = String(data.get("name") || "").trim();
+      const region = String(data.get("region") || "").trim();
+      const industry = String(data.get("industry") || "").trim();
+      if (!name || !region || !industry) { showToast("请填写企业名称、地区和行业"); return; }
+      Object.assign(company, {
+        name,
+        short: name.replace(/有限公司$/, ""),
+        region,
+        industry,
+        taxpayer: String(data.get("taxpayer") || "不清楚"),
+        dataYear: String(data.get("dataYear") || "2025"),
+        revenue: String(data.get("revenue") || ""),
+        employees: String(data.get("employees") || ""),
+        rdInvestment: String(data.get("rdInvestment") || ""),
+        hasRd: String(data.get("hasRd") || "不清楚"),
+        status: "企业资料已更新"
+      });
+      state.questionIndex = 0;
+      state.assessmentCompleted = false;
+      saveState();
+      showToast("企业资料已保存", "success");
+      go("questionnaire");
     } else if (form.id === "add-company-form") {
       const data = new FormData(form);
       const name = String(data.get("companyName") || "").trim();
       const region = String(data.get("companyRegion") || "").trim();
-      if (!name) return;
+      const industry = String(data.get("companyIndustry") || "").trim();
+      if (!name || !region || !industry) return;
       const id = `company-${Date.now()}`;
-      state.companies.push({ id, name, short: name.replace(/有限公司$/, ""), region, industry: "待补充", taxpayer: "待补充", status: "待完成首次体检" });
+      state.companies.push({ id, name, short: name.replace(/有限公司$/, ""), region, industry, taxpayer: "不清楚", dataYear: "2025", revenue: "", employees: "", rdInvestment: "", hasRd: "不清楚", status: "待完成首次体检" });
       state.currentCompany = id;
       state.assessmentCompleted = false;
       state.assessmentAnswers = {};

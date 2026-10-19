@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shuicetong.local/schemas/company-profile-v2.json",
+  "title": "CompanyProfileDraft",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "enterpriseId", "schemaVersion", "fields", "completionPercent", "updatedAt"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "enterpriseId": { "type": "string", "minLength": 1 },
+    "schemaVersion": { "const": 2 },
+    "completionPercent": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "updatedAt": { "type": "string", "format": "date-time" },
+    "fields": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "companyName",
+        "region",
+        "industry",
+        "unifiedSocialCreditCode",
+        "establishedDate",
+        "taxpayerType",
+        "dataYear",
+        "annualRevenue",
+        "totalAssets",
+        "employeeCount",
+        "taxableIncome",
+        "researchInvestment",
+        "enjoyedTaxIncentives"
+      ],
+      "properties": {
+        "companyName": { "$ref": "#/$defs/knownField" },
+        "region": { "$ref": "#/$defs/knownField" },
+        "industry": { "$ref": "#/$defs/knownField" },
+        "unifiedSocialCreditCode": { "$ref": "#/$defs/fieldValue" },
+        "establishedDate": { "$ref": "#/$defs/fieldValue" },
+        "taxpayerType": { "$ref": "#/$defs/fieldValue" },
+        "dataYear": { "$ref": "#/$defs/fieldValue" },
+        "annualRevenue": { "$ref": "#/$defs/fieldValue" },
+        "totalAssets": { "$ref": "#/$defs/fieldValue" },
+        "employeeCount": { "$ref": "#/$defs/fieldValue" },
+        "taxableIncome": { "$ref": "#/$defs/fieldValue" },
+        "researchInvestment": { "$ref": "#/$defs/fieldValue" },
+        "enjoyedTaxIncentives": { "$ref": "#/$defs/fieldValue" }
+      }
+    }
+  },
+  "$defs": {
+    "knownField": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "value", "source", "updatedAt"],
+      "properties": {
+        "status": { "const": "known" },
+        "value": {},
+        "source": { "enum": ["user", "ocr-demo", "seed"] },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "fieldValue": {
+      "oneOf": [
+        { "$ref": "#/$defs/knownField" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "source", "updatedAt"],
+          "properties": {
+            "status": { "enum": ["unknown", "unset"] },
+            "source": { "enum": ["user", "ocr-demo", "seed"] },
+            "updatedAt": { "type": "string", "format": "date-time" }
+          }
+        }
+      ]
+    }
+  }
+}

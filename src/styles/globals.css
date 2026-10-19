@@ -1,0 +1,51 @@
+* { box-sizing: border-box; }
+
+html, body, #root { min-width: 320px; min-height: 100%; margin: 0; }
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 20% 10%, rgb(52 132 255 / 10%), transparent 36%),
+    linear-gradient(180deg, #edf3fc, #f7f9fc);
+}
+
+button, input, select, textarea { font: inherit; }
+button { border: 0; cursor: pointer; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible {
+  outline: 3px solid rgb(11 102 242 / 30%);
+  outline-offset: 2px;
+}
+
+.bootstrap-page {
+  display: grid;
+  min-height: 100vh;
+  padding: 24px;
+  place-items: center;
+}
+
+.bootstrap-card {
+  width: min(100%, 420px);
+  padding: 32px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+  text-align: center;
+}
+
+.brand-mark {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 22px;
+  place-items: center;
+  border-radius: 20px;
+  color: #fff;
+  background: linear-gradient(145deg, #1780ff, #064abf);
+  box-shadow: 0 14px 30px rgb(11 102 242 / 30%);
+  font-size: 30px;
+  font-weight: 850;
+}
+
+.eyebrow { color: var(--brand); font-size: 12px; font-weight: 800; letter-spacing: .08em; }
+.bootstrap-card h1 { margin: 10px 0; font-size: 30px; }
+.bootstrap-card p:last-child { color: var(--muted); line-height: 1.7; }

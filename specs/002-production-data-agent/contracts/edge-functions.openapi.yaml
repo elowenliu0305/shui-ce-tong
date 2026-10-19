@@ -1,0 +1,312 @@
+openapi: 3.1.0
+info:
+  title: 税策通 Edge Functions
+  version: 0.1.0
+servers:
+  - url: https://{projectRef}.supabase.co/functions/v1
+    variables:
+      projectRef:
+        default: example
+security:
+  - bearerAuth: []
+paths:
+  /complete-assessment:
+    post:
+      operationId: completeAssessment
+      summary: 服务端完成一次幂等体检并生成不可变报告
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteAssessmentRequest'
+      responses:
+        '200':
+          description: 完成或返回同一幂等结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompleteAssessmentResponse'
+        '409': { $ref: '#/components/responses/Conflict' }
+        default: { $ref: '#/components/responses/Error' }
+  /knowledge-search:
+    post:
+      operationId: searchKnowledge
+      summary: 混合检索并返回稳定引用
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: 搜索结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        default: { $ref: '#/components/responses/Error' }
+  /knowledge-source-url:
+    post:
+      operationId: createKnowledgeSourceUrl
+      summary: 为已发布资料的原始来源生成短期签名下载链接
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KnowledgeSourceUrlRequest'
+      responses:
+        '200':
+          description: 120 秒内有效的原文件签名链接
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeSourceUrlResponse'
+        default: { $ref: '#/components/responses/Error' }
+  /agent-chat:
+    post:
+      operationId: agentChat
+      summary: 路由问题、调用工具并保存带引用回答
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentChatRequest'
+      responses:
+        '200':
+          description: 回答、依据不足或可区分失败
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentChatResponse'
+        default: { $ref: '#/components/responses/Error' }
+  /enterprise-file-upload:
+    post:
+      operationId: enterpriseFileUpload
+      summary: 准备签名上传、核验对象、读取状态或生成原文件短期下载链接
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnterpriseFileRequest'
+      responses:
+        '200':
+          description: 上传准备、完成记录或短期下载链接
+          content:
+            application/json:
+              schema: { type: object, additionalProperties: true }
+        default: { $ref: '#/components/responses/Error' }
+  /delete-enterprise:
+    post:
+      operationId: deleteEnterprise
+      summary: 撤销并清理当前账号拥有的企业
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [enterpriseId, confirmation]
+              properties:
+                enterpriseId: { type: string, format: uuid }
+                confirmation: { type: string, const: DELETE }
+      responses:
+        '200':
+          description: 全部资产已不可访问的删除摘要
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteSummary'
+        default: { $ref: '#/components/responses/Error' }
+  /delete-enterprise-file:
+    post:
+      operationId: deleteEnterpriseFile
+      summary: 删除企业文件、派生内容和分析记录
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [enterpriseId, recordId]
+              properties:
+                enterpriseId: { type: string, format: uuid }
+                recordId: { type: string, format: uuid }
+      responses:
+        '200':
+          description: 删除摘要
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteSummary'
+        default: { $ref: '#/components/responses/Error' }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    RequestId:
+      name: X-Request-Id
+      in: header
+      required: false
+      schema: { type: string, format: uuid }
+  schemas:
+    CompleteAssessmentRequest:
+      type: object
+      additionalProperties: false
+      required: [enterpriseId, profileRevision, questionnaireRevision, asOfDate, idempotencyKey]
+      properties:
+        enterpriseId: { type: string, format: uuid }
+        profileRevision: { type: integer, minimum: 1 }
+        questionnaireRevision: { type: integer, minimum: 1 }
+        asOfDate: { type: string, format: date }
+        idempotencyKey: { type: string, minLength: 16, maxLength: 128 }
+    CompleteAssessmentResponse:
+      type: object
+      required: [submissionId, runId, reportId, status]
+      properties:
+        submissionId: { type: string, format: uuid }
+        runId: { type: string, format: uuid }
+        reportId: { type: string, format: uuid }
+        status: { type: string, const: completed }
+        replayed: { type: boolean }
+    SearchRequest:
+      type: object
+      additionalProperties: false
+      required: [query]
+      properties:
+        query: { type: string, minLength: 1, maxLength: 500 }
+        mode: { type: string, enum: [discovery, reliable_tax], default: discovery }
+        asOfDate: { type: string, format: date }
+        filters: { type: object, additionalProperties: true }
+        limit: { type: integer, minimum: 1, maximum: 20, default: 10 }
+    Citation:
+      type: object
+      required: [citationId, documentId, documentVersionId, chunkId, title, locator]
+      properties:
+        citationId: { type: string, format: uuid }
+        documentId: { type: string, format: uuid }
+        documentVersionId: { type: string, format: uuid }
+        chunkId: { type: string, format: uuid }
+        title: { type: string }
+        documentNumber: { type: [string, 'null'] }
+        issuer:
+          type: array
+          items: { type: string }
+        validityStatus: { type: string }
+        locator: { type: object, additionalProperties: true }
+        excerpt: { type: string }
+        score: { type: number }
+    SearchResponse:
+      type: object
+      required: [items, requestId]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Citation' }
+        requestId: { type: string, format: uuid }
+    KnowledgeSourceUrlRequest:
+      type: object
+      additionalProperties: false
+      required: [documentId]
+      properties:
+        documentId: { type: string, format: uuid }
+    KnowledgeSourceUrlResponse:
+      type: object
+      additionalProperties: false
+      required: [fileName, mimeType, signedUrl, expiresIn]
+      properties:
+        fileName: { type: string }
+        mimeType: { type: string }
+        signedUrl: { type: string, format: uri }
+        expiresIn: { type: integer, const: 120 }
+    AgentChatRequest:
+      type: object
+      additionalProperties: false
+      required: [enterpriseId, message, idempotencyKey]
+      properties:
+        enterpriseId: { type: string, format: uuid }
+        conversationId: { type: string, format: uuid }
+        message: { type: string, minLength: 1, maxLength: 8000 }
+        reportId: { type: string, format: uuid }
+        knowledgeDocumentId: { type: string, format: uuid }
+        idempotencyKey: { type: string, minLength: 16, maxLength: 128 }
+    AgentChatResponse:
+      type: object
+      required: [conversationId, messageId, status, intent, content, citations, toolsUsed, suggestedQuestions, replayed]
+      properties:
+        conversationId: { type: string, format: uuid }
+        messageId: { type: string, format: uuid }
+        status: { type: string, enum: [completed, insufficient_evidence, failed] }
+        intent: { type: string, enum: [general, tax_policy_case, enterprise_report, sme_finance_operations] }
+        content: { type: string }
+        citations:
+          type: array
+          items: { $ref: '#/components/schemas/Citation' }
+        suggestedQuestions:
+          type: array
+          items: { type: string }
+        toolsUsed:
+          type: array
+          items: { type: string }
+        errorStage: { type: [string, 'null'], enum: [retrieval, context, model, persistence, null] }
+        replayed: { type: boolean }
+    EnterpriseFileRequest:
+      type: object
+      additionalProperties: false
+      required: [action, enterpriseId]
+      properties:
+        action: { type: string, enum: [prepare, finalize, fail, download] }
+        enterpriseId: { type: string, format: uuid }
+        recordId: { type: string, format: uuid }
+        fileId: { type: string, format: uuid }
+        idempotencyKey: { type: string, format: uuid }
+        task: { type: string, enum: [tax-health, rd-check, invoice-check, cashflow-summary] }
+        errorCode: { type: string }
+        file:
+          type: object
+          additionalProperties: false
+          properties:
+            displayName: { type: string, minLength: 1, maxLength: 255 }
+            mediaType: { type: string }
+            byteSize: { type: integer, minimum: 1, maximum: 20971520 }
+    DeleteSummary:
+      type: object
+      required: [resourceId, status, deletedCounts]
+      properties:
+        resourceId: { type: string, format: uuid }
+        status: { type: string, const: completed }
+        deletedCounts: { type: object, additionalProperties: { type: integer } }
+        favoritesPreserved: { type: boolean }
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, requestId, retryable]
+          properties:
+            code: { type: string }
+            message: { type: string }
+            requestId: { type: string, format: uuid }
+            retryable: { type: boolean }
+            details: { type: object, additionalProperties: true }
+  responses:
+    Conflict:
+      description: revision 或幂等 payload 冲突
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+    Error:
+      description: 稳定错误信封
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
