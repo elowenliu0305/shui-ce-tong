@@ -52,7 +52,7 @@ export async function requestStructuredModelAnswer(
   const model = env("MODEL_NAME")?.trim();
   if (!baseUrl || !apiKey || !model) throw new Error("model_not_configured");
   const fetcher = options.fetcher ?? fetch;
-  const retries = options.retries ?? 2;
+  const retries = options.retries ?? 1;
   let lastError = "model_request_failed";
   for (let attempt = 0; attempt <= retries; attempt += 1) {
     try {
@@ -60,7 +60,7 @@ export async function requestStructuredModelAnswer(
         method: "POST",
         headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({ model, messages, temperature: 0.2, response_format: { type: "json_object" } }),
-        signal: AbortSignal.timeout(options.timeoutMs ?? 25_000),
+        signal: AbortSignal.timeout(options.timeoutMs ?? 15_000),
       });
       const body = await response.json() as ChatCompletionResponse;
       const content = body.choices?.[0]?.message?.content;
