@@ -107,6 +107,25 @@
 
 @media (max-width: 759px) {
   html, body, #root { width: 100%; min-height: 100%; }
-  #root, .phone-frame, .phone-screen, .app-shell { min-height: 100dvh; }
-  .mobile-canvas { min-height: 100dvh; }
+  body { display: block; padding: 0; }
+  #root, .app-shell { min-height: 100dvh; }
+  .mobile-canvas {
+    width: 100%;
+    height: auto;
+    min-height: 100dvh;
+    margin: 0;
+    padding: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+  .mobile-canvas::before,
+  .mobile-canvas::after { display: none; }
+  .mobile-canvas > .phone-screen {
+    height: auto;
+    min-height: 100dvh;
+    border-radius: 0;
+    overflow: visible;
+    background: transparent;
+  }
 }

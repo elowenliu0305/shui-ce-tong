@@ -25,7 +25,7 @@ export function LoginPage() {
       if (result.error.code === "EMAIL_NOT_VERIFIED") navigate("/verify-email", { state: { email } });
       return;
     }
-    refresh();
+    await refresh();
     const from = (location.state as { from?: string } | null)?.from;
     navigate(from || "/", { replace: true });
   }
@@ -44,7 +44,7 @@ export function LoginPage() {
           const result = await dependencies.auth.startDemoSession();
           setBusy(false);
           if (!result.ok) return setError(result.error.message);
-          refresh();
+          await refresh();
           navigate("/", { replace: true });
         }}>直接进入演示账号</button> : null}
       </form>

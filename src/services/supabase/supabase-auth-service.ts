@@ -60,11 +60,19 @@ export class SupabaseAuthService implements AuthService {
     return success(data.session ? sessionFor(data.session) : null);
   }
 
+  private emailRedirectTo(): string {
+    return `${window.location.origin}/verify-email`;
+  }
+
   async register(email: string, password: string) {
     const invalid = validate(email, password);
     if (invalid) return failure(invalid);
     const normalized = normalizeEmail(email);
-    const { error } = await this.client.auth.signUp({ email: normalized, password });
+    const { error } = await this.client.auth.signUp({
+      email: normalized,
+      password,
+      options: { emailRedirectTo: this.emailRedirectTo() },
+    });
     if (error) return failure(mapAuthError(error));
     return success({ emailMasked: maskEmail(normalized) });
   }
@@ -84,7 +92,11 @@ export class SupabaseAuthService implements AuthService {
     const invalid = validate(email);
     if (invalid) return failure(invalid);
     const normalized = normalizeEmail(email);
-    const { error } = await this.client.auth.resend({ type: "signup", email: normalized });
+    const { error } = await this.client.auth.resend({
+      type: "signup",
+      email: normalized,
+      options: { emailRedirectTo: this.emailRedirectTo() },
+    });
     if (error?.status === 429) return failure(mapAuthError(error));
     return success({ emailMasked: maskEmail(normalized) });
   }

@@ -2,11 +2,11 @@
 
 > 项目路径：`/Users/jyokann/Documents/ChatGPT/新悦杯/dist/`
 > 仓库：github.com/elowenliu0305/shui-ce-tong（main 分支）
-> 最后更新：2026-10-20（spec 002 全部 70/70 完成，真实语料管线闭环，Vercel 生产部署上线）
+> 最后更新：2026-10-20（线上问题修复：移动端全屏适配 + 邮箱确认链接；Vercel 项目改名 shuicetong 并已重新部署）
 
 ## 当前状态（一句话）
 
-spec 001/002 全部完成。React 前端 + Supabase 云后端（102 份真实政策资料已入库、656 向量、AI 问答已接 DeepSeek）已部署 Vercel 生产环境：https://dist-elowenliu0305-6335s-projects.vercel.app
+spec 001/002 全部完成。React 前端 + Supabase 云后端（102 份真实政策资料已入库、656 向量、AI 问答已接 DeepSeek）已部署 Vercel 生产环境：https://shuicetong-elowenliu0305-6335s-projects.vercel.app 。本轮修复了两个线上问题（iPhone 上下白边、注册邮箱确认链接无响应），**尚待用户在手机（Vercel 登录态）上实测确认**。
 
 ## 架构
 
@@ -43,16 +43,29 @@ spec 001/002 全部完成。React 前端 + Supabase 云后端（102 份真实政
 
 **How to apply:** 今后改 migration 里的 SQL 函数，注意 `search_path=''` 下所有跨 schema 对象必须加限定符；云库函数热修用 `create or replace` 单独重建（含 create policy 的 migration 不能整体重放）。
 
+## 线上问题修复（2026-10-20，待手机实测确认）
+
+1. **iPhone 上下白边**：移动端仍套着桌面"手机模型"外壳（`body` padding 30px+flex 居中、`.phone-frame` 固定 960px 高+深色边框+灵动岛、`.phone-screen` 白底 overflow hidden）→ `src/styles/legacy-react.css` 的 `max-width:759px` media query 完整移除外壳（100dvh、去 padding/边框/圆角/伪元素）。393×852 截图验证铺满。
+2. **注册邮箱确认链接无响应**：双重根因——① `signUp` 未传 `emailRedirectTo`，链接落到 Site URL；② Supabase 控制台 Site URL 当时是 `http://localhost:3000`，且 Redirect URLs 为空。修复：`supabase-auth-service` 的 register/resend 均带 `emailRedirectTo={origin}/verify-email`；`VerifyEmailPage` 挂载时检测链接回调自动建立的会话并直进首页；控制台已把 Site URL 改为生产域名、Redirect URLs 加 3 个域名（`/*` 后缀）。**旧邮件链接已失效**，旧账号需在验证页"重新发送验证码"或手输 6 位码。
+3. **vercel.json 补 SPA 重写**（排除 `assets/`、`prototype-assets/`），否则 `/verify-email` 等直达路径 404。
+4. **refresh() 竞态**（codex P1#4 相关）：登录/验证/建企三处改 `await refresh()` 后再跳转。
+5. **生产文案**（codex P2#7）：AuthLayout 与 AssessmentMethodPage 按 `getDataBackend()` 区分 mock/生产文案。
+6. **Vercel 项目改名** `dist` → `shuicetong`，重新部署绑定新主域名；同步更新 Supabase `ALLOWED_WEB_ORIGINS`（3 域名，已实测 CORS 回显通过）、`.vercel/project.json`、本文件。
+7. 验证：typecheck/lint/vitest 91/playwright 39/build 全绿（改名部署前）。
+
 ## 待办
 
-1. 需已验证浏览器测试账号的项：3 项生产 E2E（`SUPABASE_E2E_EMAIL/PASSWORD`）与其余真实后端集成测试（数据库/RPC/检索层已用 service role 全部验收）
-2. mammoth→sprintf-js 中危依赖：无上游修复，暴露面已评估（仅 library API），待上游发版
-3. Vercel 项目名目前是 `dist`（控制台 Settings 可改成 shui-ce-tong，域名随之更新；改了记得同步 Supabase 的 `ALLOWED_WEB_ORIGINS` secret）
+1. **手机实测**（保持 Vercel 登录态打开生产域名）：全屏无白边；新邮箱注册→点邮件链接→自动进首页；AI 问答正常
+2. **SSO Protection 决定**：项目 `ssoProtection=all_except_custom_domains`，所有 *.vercel.app 访问需 Vercel 登录态；比赛前如评委要公开访问需在控制台关闭
+3. 需已验证浏览器测试账号的项：3 项生产 E2E（`SUPABASE_E2E_EMAIL/PASSWORD`）与其余真实后端集成测试（数据库/RPC/检索层已用 service role 全部验收）
+4. mammoth→sprintf-js 中危依赖：无上游修复，暴露面已评估（仅 library API），待上游发版
+5. codex review 遗留（纯代码可修，下一轮）：Agent 组合意图绕过 RAG（报告上下文+税务问题）；问卷快速操作保存串行化；企业编辑乐观锁被服务层绕过；知识导入批次 rejected 即中断；外层仓库根目录/README 与实际不符
 
 ## 部署与环境
 
-- **Vercel 生产**：https://dist-elowenliu0305-6335s-projects.vercel.app（备用别名 dist-blue-tau-48）；生产环境变量 `VITE_DATA_BACKEND=supabase` + 云项目 URL/publishable key
-- **Supabase Edge secrets 已配**：`ALLOWED_WEB_ORIGINS`（两个 Vercel 域名）、`MODEL_*`（DeepSeek deepseek-v4-pro）、`EMBEDDING_*`（DashScope qwen3.7-text-embedding 1024 维，工作空间 ws-sk906y6jxrs4ubt0）
+- **Vercel 生产**（项目名 shuicetong，projectId prj_qhY2ofWzvDFuh7eGRCeqMO8wbIWm）：https://shuicetong-elowenliu0305-6335s-projects.vercel.app（备用别名 dist-blue-tau-48）；生产环境变量 `VITE_DATA_BACKEND=supabase` + 云项目 URL/publishable key；`vercel deploy --prod --yes` 部署
+- **Supabase Edge secrets 已配**：`ALLOWED_WEB_ORIGINS`（shuicetong 新域名 + dist 旧主域名 + dist-blue-tau-48，2026-10-20 更新并实测 CORS 通过）、`MODEL_*`（DeepSeek deepseek-v4-pro）、`EMBEDDING_*`（DashScope qwen3.7-text-embedding 1024 维，工作空间 ws-sk906y6jxrs4ubt0）
+- **Supabase Auth URL 配置**（2026-10-20 更新）：Site URL = shuicetong 生产域名；Redirect URLs = 3 个 Vercel 域名各带 `/*`
 - **资料库现状**：102 文件 / 101 当前版本 / 656 分块 / 656 向量（generation e67fdf77 active），全部 verified+current（2026-10-20 用户确认批量核验）
 
 ## 常用命令

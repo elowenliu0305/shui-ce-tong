@@ -18,7 +18,7 @@ export function NewEnterprisePage() {
           if (!session) return "登录状态已失效，请重新登录";
           const result = await dependencies.enterprises.create(session.accountId, input);
           if (!result.ok) return result.error.message;
-          refresh();
+          await refresh();
           navigate("/", { replace: true });
           return null;
         }} />

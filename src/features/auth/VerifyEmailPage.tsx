@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { Button } from "../../components/forms/Button";
@@ -18,13 +18,25 @@ export function VerifyEmailPage() {
   const [notice, setNotice] = useState("");
   const isMock = getDataBackend() === "mock";
 
+  useEffect(() => {
+    if (isMock) return;
+    let cancelled = false;
+    void dependencies.auth.getSession().then((result) => {
+      if (cancelled || !result.ok || !result.data) return;
+      void refresh().then(() => {
+        if (!cancelled) navigate("/", { replace: true });
+      });
+    });
+    return () => { cancelled = true; };
+  }, [dependencies.auth, refresh, navigate, isMock]);
+
   async function submit(event: FormEvent) {
     event.preventDefault();
     setBusy(true);
     const result = await dependencies.auth.verifyEmail(email, code);
     setBusy(false);
     if (!result.ok) return setError(result.error.message);
-    refresh();
+    await refresh();
     navigate("/", { replace: true });
   }
 
