@@ -122,10 +122,9 @@
   .mobile-canvas::before,
   .mobile-canvas::after { display: none; }
   .mobile-canvas > .phone-screen {
-    height: auto;
-    min-height: 100dvh;
+    height: 100dvh;
     border-radius: 0;
-    overflow: visible;
+    overflow: hidden;
     background: transparent;
   }
 }
