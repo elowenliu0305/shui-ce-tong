@@ -52,10 +52,12 @@ spec 001/002 全部完成。React 前端 + Supabase 云后端（102 份真实政
 5. **生产文案**（codex P2#7）：AuthLayout 与 AssessmentMethodPage 按 `getDataBackend()` 区分 mock/生产文案。
 6. **Vercel 项目改名** `dist` → `shuicetong`，重新部署绑定新主域名；同步更新 Supabase `ALLOWED_WEB_ORIGINS`（3 域名，已实测 CORS 回显通过）、`.vercel/project.json`、本文件。
 7. 验证：typecheck/lint/vitest 91/playwright 39/build 全绿（改名部署前）。
+8. **PWA 全屏**（2026-10-20 下午）：用户确认"白边"是 Safari 浏览器栏 → 加 `public/manifest.webmanifest` + 图标（icon-192/512、apple-touch-icon，PIL 生成品牌蓝"税"字）+ index.html PWA meta。iPhone 上「添加到主屏幕」后从图标打开即无浏览器栏的 App 式全屏。
+9. **邮箱问题根因确认**（auth 日志）：`1014256435@qq.com` 实际 14:38 已验证并登录；对**已确认账号**重复 signup 返回 `user_repeated_signup`、resend 返回 200 但**不发新邮件**（无 mail.send 事件）。此类用户直接密码登录即可；测链接流程需用全新邮箱。匿名请求被 Vercel SSO 墙拦截（200 返回登录页 HTML），静态文件需用登录态访问验证。
 
 ## 待办
 
-1. **手机实测**（保持 Vercel 登录态打开生产域名）：全屏无白边；新邮箱注册→点邮件链接→自动进首页；AI 问答正常
+1. **手机实测**（保持 Vercel 登录态打开生产域名）：Safari 内验证链接流程（用全新邮箱注册→点邮件链接→自动进首页）；「添加到主屏幕」验证 PWA 全屏
 2. **SSO Protection 决定**：项目 `ssoProtection=all_except_custom_domains`，所有 *.vercel.app 访问需 Vercel 登录态；比赛前如评委要公开访问需在控制台关闭
 3. 需已验证浏览器测试账号的项：3 项生产 E2E（`SUPABASE_E2E_EMAIL/PASSWORD`）与其余真实后端集成测试（数据库/RPC/检索层已用 service role 全部验收）
 4. mammoth→sprintf-js 中危依赖：无上游修复，暴露面已评估（仅 library API），待上游发版
